@@ -1,0 +1,3595 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNN NewsDesk</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* ─── RESET & VARS ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0e0e10;
+  --surf:    #17171a;
+  --card:    #1e1e22;
+  --border:  #2c2c32;
+  --bh:      #3e3e48;
+  --text:    #e8e8f0;
+  --t2:      #9898a8;
+  --t3:      #555560;
+  --t4:      #2e2e38;
+  --acc:     #E04E1B;
+  --acc2:    #c04015;
+  --adim:    rgba(224,78,27,.10);
+  --aglow:   rgba(224,78,27,.22);
+  --green:   #22c55e;
+  --blue:    #3b82f6;
+  --yellow:  #eab308;
+  --red:     #ef4444;
+  --purple:  #a855f7;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Sarabun', sans-serif;
+  --r:  8px;
+  --rl: 12px;
+}
+html, body { height: 100%; overflow: hidden; font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--acc); }
+::-webkit-calendar-picker-indicator { filter: invert(.5); }
+
+/* ─── ANIMATIONS ──────────────────────────────────────────── */
+@keyframes fadeUp   { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+@keyframes spin     { to { transform:rotate(360deg); } }
+@keyframes pulse    { 0%,100%{opacity:1} 50%{opacity:.3} }
+.fu  { animation: fadeUp .25s cubic-bezier(.22,.61,.36,1) forwards; }
+.fi  { animation: fadeIn .2s ease forwards; }
+.sp  { animation: spin .7s linear infinite; }
+.pu  { animation: pulse 1.6s ease-in-out infinite; }
+
+/* ─── LOGIN ───────────────────────────────────────────────── */
+#login-screen {
+  position:fixed; inset:0; z-index:99;
+  display:flex; align-items:center; justify-content:center;
+  background: radial-gradient(ellipse 70% 60% at 60% 40%, rgba(224,78,27,.08), transparent 68%), var(--bg);
+}
+.lc {
+  width:100%; max-width:340px;
+  background:var(--surf); border:1px solid var(--border); border-radius:18px;
+  padding:32px 28px; box-shadow:0 0 0 1px rgba(255,255,255,.03), 0 24px 48px rgba(0,0,0,.5);
+}
+.logo-box {
+  width:40px; height:40px; border-radius:10px; background:var(--acc);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-weight:700; font-size:9px; color:#fff; line-height:1.2; text-align:center;
+  box-shadow:0 0 18px var(--aglow);
+}
+
+/* ─── APP SHELL ───────────────────────────────────────────── */
+#app { display:none; height:100%; flex-direction:row; }
+#app.on { display:flex; }
+
+/* ─── SIDEBAR ─────────────────────────────────────────────── */
+#sidebar {
+  width:260px; flex-shrink:0;
+  background:var(--surf); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.sb-logo {
+  padding:13px 15px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:9px;
+}
+.sb-logo-icon {
+  width:28px; height:28px; border-radius:7px; background:var(--acc);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-weight:700; font-size:7px; color:#fff; line-height:1.2; text-align:center;
+  box-shadow:0 0 10px var(--aglow); flex-shrink:0;
+}
+.sb-nav { flex:1; overflow-y:auto; padding:7px 7px 4px; }
+.nav-grp { font-size:9px; font-weight:600; color:var(--t3); text-transform:uppercase; letter-spacing:.08em; padding:9px 8px 4px; }
+.nb {
+  display:flex; align-items:center; gap:9px; width:100%;
+  padding:8px 10px; border-radius:7px;
+  font-family:var(--sans); font-size:13px; font-weight:500;
+  color:var(--t2); background:transparent; border:1px solid transparent;
+  cursor:pointer; text-align:left; transition:all .15s; margin-bottom:1px;
+}
+.nb i { font-size:12px; width:14px; text-align:center; color:var(--t3); flex-shrink:0; transition:color .15s; }
+.nb:hover { background:var(--card); color:var(--text); }
+.nb:hover i { color:var(--t2); }
+.nb.on { background:var(--adim); color:var(--acc); border-color:var(--aglow); }
+.nb.on i { color:var(--acc); }
+.nb-badge { margin-left:auto; background:var(--red); color:#fff; font-size:9px; font-weight:700; padding:1px 5px; border-radius:8px; font-family:var(--mono); }
+.sb-user {
+  padding:9px 10px; border-top:1px solid var(--border);
+  display:flex; align-items:center; gap:8px;
+}
+.av {
+  width:26px; height:26px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:700; color:#fff; flex-shrink:0;
+}
+
+/* ─── TOPBAR ──────────────────────────────────────────────── */
+#main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+#topbar {
+  height:48px; flex-shrink:0;
+  background:var(--surf); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; padding:0 20px;
+}
+#pg-title { font-size:13px; font-weight:700; color:var(--text); }
+.pill { font-family:var(--mono); font-size:10.5px; color:var(--t2); background:var(--card); border:1px solid var(--border); border-radius:6px; padding:3px 9px; }
+#clk { color:var(--acc); }
+#pg-wrap { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+
+/* ─── FORM ELEMENTS ───────────────────────────────────────── */
+.inp {
+  width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text);
+  border-radius:var(--r); padding:8px 11px; font-size:13px; font-family:var(--sans);
+  outline:none; transition:border-color .15s;
+}
+.inp:focus { border-color:var(--acc); }
+.inp::placeholder { color:var(--t4); }
+select.inp { cursor:pointer; appearance:none; }
+textarea.inp { resize:vertical; }
+.lbl { display:block; font-size:10.5px; font-weight:600; color:var(--t3); margin-bottom:4px; letter-spacing:.02em; }
+
+/* ─── BUTTONS ─────────────────────────────────────────────── */
+.btn { display:inline-flex; align-items:center; gap:6px; border:none; border-radius:var(--r); padding:8px 15px; font-size:13px; font-weight:600; cursor:pointer; font-family:var(--sans); transition:all .15s; white-space:nowrap; }
+.bp  { background:var(--acc); color:#fff; }
+.bp:hover { background:var(--acc2); }
+.bp:disabled { opacity:.45; cursor:not-allowed; }
+.bg  { background:transparent; color:var(--t2); border:1px solid var(--border); }
+.bg:hover { color:var(--text); border-color:var(--bh); }
+.bgreen { background:rgba(34,197,94,.1); color:#4ade80; border:1px solid rgba(34,197,94,.22); }
+.bgreen:hover { background:rgba(34,197,94,.18); }
+.bred { background:rgba(239,68,68,.1); color:#f87171; border:1px solid rgba(239,68,68,.22); }
+.bred:hover { background:rgba(239,68,68,.18); }
+.bsm { padding:5px 10px; font-size:11.5px; }
+.bic { padding:6px; background:transparent; border:1px solid var(--border); color:var(--t3); border-radius:6px; cursor:pointer; font-size:11px; transition:all .15s; }
+.bic:hover { color:var(--text); border-color:var(--bh); background:var(--card); }
+
+/* ─── CARDS & SURFACES ────────────────────────────────────── */
+.card  { background:var(--card); border:1px solid var(--border); border-radius:var(--rl); }
+.cardsm { background:var(--card); border:1px solid var(--border); border-radius:var(--r); }
+.stat { background:var(--card); border:1px solid var(--border); border-radius:var(--rl); padding:13px 15px; }
+
+/* ─── BADGES ──────────────────────────────────────────────── */
+.badge { display:inline-flex; align-items:center; font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px; border:1px solid; white-space:nowrap; }
+.b-pend { background:rgba(239,68,68,.07); color:#f87171; border-color:rgba(239,68,68,.2); }
+.b-asgn { background:rgba(59,130,246,.07); color:#60a5fa; border-color:rgba(59,130,246,.2); }
+.b-done { background:rgba(34,197,94,.07); color:#4ade80; border-color:rgba(34,197,94,.2); }
+.b-rate   { background:rgba(234,179,8,.07);  color:#facc15;  border-color:rgba(234,179,8,.2);  }
+.b-travel { background:rgba(167,139,250,.07); color:#a78bfa; border-color:rgba(167,139,250,.2); }
+.b-avail { background:rgba(34,197,94,.07); color:#4ade80; border-color:rgba(34,197,94,.2); }
+.b-inuse { background:rgba(59,130,246,.07); color:#60a5fa; border-color:rgba(59,130,246,.2); }
+.b-maint { background:rgba(239,68,68,.07); color:#fca5a5; border-color:rgba(239,68,68,.2); }
+
+/* ─── TABLE ───────────────────────────────────────────────── */
+.tbl { width:100%; border-collapse:collapse; }
+.tbl th { padding:8px 13px; font-size:10px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.06em; border-bottom:1px solid var(--border); text-align:left; white-space:nowrap; }
+.tbl td { padding:9px 13px; font-size:12.5px; border-bottom:1px solid rgba(255,255,255,.03); vertical-align:middle; }
+.tbl tbody tr:last-child td { border-bottom:none; }
+.tbl tbody tr:hover td { background:rgba(255,255,255,.01); }
+
+/* ─── MODAL ───────────────────────────────────────────────── */
+.modal-ov { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:80; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+.modal-ov.on { display:flex; }
+.modal-box { background:var(--card); border:1px solid var(--border); border-radius:16px; width:100%; max-width:480px; margin:16px; box-shadow:0 24px 48px rgba(0,0,0,.5); }
+.mh { padding:18px 20px 0; display:flex; align-items:center; justify-content:space-between; }
+.mb { padding:16px 20px; }
+.mf { padding:0 20px 18px; display:flex; justify-content:flex-end; gap:7px; border-top:1px solid var(--border); padding-top:13px; }
+.mcl { background:none; border:none; color:var(--t3); cursor:pointer; font-size:16px; padding:3px 6px; border-radius:5px; transition:color .15s; }
+.mcl:hover { color:var(--text); }
+
+/* ─── CRITERIA RATING ─────────────────────────────────────── */
+.cr-btn {
+  flex:1; padding:7px 4px; border-radius:7px; border:1px solid var(--border);
+  background:transparent; color:var(--t3); font-size:11px; font-weight:600;
+  cursor:pointer; font-family:var(--sans); transition:all .13s; text-align:center;
+}
+.cr-btn:hover { border-color:var(--bh); color:var(--text); }
+.cr-btn.good  { background:rgba(34,197,94,.12);  border-color:rgba(34,197,94,.35);  color:#4ade80; }
+.cr-btn.ok    { background:rgba(234,179,8,.10);  border-color:rgba(234,179,8,.35);  color:#facc15; }
+.cr-btn.bad   { background:rgba(239,68,68,.10);  border-color:rgba(239,68,68,.35);  color:#f87171; }
+/* keep star CSS for backward compat on display */
+.star { background:none; border:none; cursor:pointer; font-size:18px; color:var(--t4); transition:color .12s; padding:1px 2px; }
+.star.lit { color:#f5c518; }
+
+/* ─── SCROLL PAGE ─────────────────────────────────────────── */
+.pg { flex:1; overflow-y:auto; padding:22px; }
+
+/* ─── GLOBAL CALENDAR ─────────────────────────────────────── */
+.cal-wrap {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 12px 10px;
+  flex-shrink: 0;
+  background: var(--bg);
+  /* Lock height so calendar never shifts layout */
+  height: 262px;
+  overflow: hidden;
+}
+.cal-mode-bar {
+  display: flex; gap: 3px; margin-bottom: 10px;
+}
+.cal-mode-btn {
+  flex: 1; padding: 5px 0; font-size: 10px; font-weight: 500;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--t3); border-radius: 6px; cursor: pointer;
+  font-family: var(--sans); transition: all .13s;
+}
+.cal-mode-btn:hover { color: var(--text); border-color: var(--bh); }
+.cal-mode-btn.on    { background: var(--acc); color: #fff; border-color: var(--acc); }
+.cal-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.cal-nav {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--t2); cursor: pointer; width: 24px; height: 24px;
+  border-radius: 6px; font-size: 14px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .13s;
+}
+.cal-nav:hover { background: var(--border); color: var(--text); }
+.cal-title {
+  font-size: 12px; font-weight: 700; color: var(--text);
+  cursor: pointer; padding: 2px 6px; border-radius: 5px;
+  transition: all .13s;
+}
+.cal-title:hover { color: var(--acc); background: var(--adim); }
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7,1fr);
+  grid-auto-rows: 26px;   /* each row fixed 26px — never grows */
+  gap: 2px;
+  /* Fix to exactly 6 data rows + 1 header row */
+  height: 188px;
+  overflow: hidden;
+}
+.cal-hd {
+  text-align: center; font-size: 9px; color: var(--t3);
+  padding: 2px 0 4px; font-weight: 600;
+}
+.cal-day {
+  text-align: center; font-size: 11px; padding: 4px 2px;
+  border-radius: 6px; cursor: pointer; transition: all .12s;
+  color: var(--t2); position: relative; line-height: 1.4;
+  min-height: 26px; display: flex; align-items: center; justify-content: center;
+}
+.cal-day:hover  { background: var(--border); color: var(--text); }
+.cal-day.today  { color: var(--acc); font-weight: 700; }
+.cal-day.today::before {
+  content: ''; position: absolute; inset: 0;
+  border: 1.5px solid var(--aglow); border-radius: 6px;
+}
+.cal-day.sel    { background: var(--acc) !important; color: #fff !important; font-weight: 700; }
+.cal-day.in-range  { background: var(--adim); color: var(--acc); }
+.cal-day.range-edge { background: var(--acc) !important; color: #fff !important; font-weight: 700; }
+.cal-day.other  { color: var(--t4); font-size: 10px; }
+.cal-day.has-data::after {
+  content: ''; position: absolute; bottom: 2px; left: 50%;
+  transform: translateX(-50%); width: 4px; height: 4px;
+  background: var(--green); border-radius: 50%;
+}
+.gd-label {
+  margin-top: 8px; padding: 5px 8px; border-radius: 7px;
+  background: var(--card); border: 1px solid var(--border);
+  font-size: 10px; color: var(--t2); text-align: center;
+  min-height: 24px; line-height: 1.5;
+}
+.gd-label span { color: var(--acc); font-weight: 700; }
+
+/* ─── GRID HELPERS ────────────────────────────────────────── */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+.g3 { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+.g4 { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; }
+
+/* ─── PROGRESS BAR ────────────────────────────────────────── */
+.prog { height:3px; background:var(--border); border-radius:3px; overflow:hidden; }
+.pf   { height:100%; background:var(--acc); border-radius:3px; transition:width .5s; }
+
+/* ─── TIMELINE ────────────────────────────────────────────── */
+.timeline { position:relative; padding-left:32px; }
+.timeline::before { content:''; position:absolute; top:8px; bottom:8px; left:16px; width:1px; background:linear-gradient(to bottom, var(--border), transparent); }
+.tli { position:relative; margin-bottom:13px; }
+.tld { position:absolute; left:-22px; top:14px; width:9px; height:9px; border-radius:50%; border:2px solid var(--bg); }
+
+/* ─── SEGMENT ─────────────────────────────────────────────── */
+.seg { display:inline-flex; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:3px; gap:2px; }
+.sb  { padding:5px 12px; font-size:11.5px; font-weight:500; border-radius:5px; border:none; cursor:pointer; font-family:var(--sans); transition:all .15s; color:var(--t3); background:transparent; }
+.sb.on { background:var(--acc); color:#fff; }
+.sb:not(.on):hover { color:var(--text); background:rgba(255,255,255,.04); }
+
+/* ─── TOAST ───────────────────────────────────────────────── */
+#toasts { position:fixed; bottom:18px; right:18px; z-index:999; display:flex; flex-direction:column; gap:7px; pointer-events:none; }
+.toast { background:var(--card); border:1px solid var(--border); border-left:3px solid var(--green); border-radius:9px; padding:9px 13px; font-size:12.5px; color:var(--text); max-width:290px; box-shadow:0 8px 24px rgba(0,0,0,.4); animation:fadeUp .22s ease; }
+.toast.err { border-left-color:var(--red); }
+.toast.warn { border-left-color:var(--yellow); }
+
+/* ─── CREW LAYOUT ─────────────────────────────────────────── */
+.crew-wrap { display:flex; flex:1; overflow:hidden; }
+.crew-sb { width:250px; flex-shrink:0; border-right:1px solid var(--border); background:var(--surf); display:flex; flex-direction:column; overflow:hidden; }
+.crew-main { flex:1; overflow-y:auto; padding:20px; }
+
+/* ─── SECTION LABEL ───────────────────────────────────────── */
+.slbl { font-size:9.5px; font-weight:600; color:var(--t3); text-transform:uppercase; letter-spacing:.08em; margin-bottom:7px; }
+
+/* ─── STEP NUMBER ─────────────────────────────────────────── */
+.step-num { width:22px; height:22px; border-radius:6px; background:var(--adim); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:var(--acc); font-family:var(--mono); flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="login-screen">
+  <div class="lc fu">
+    <div style="text-align:center;margin-bottom:22px;">
+      <div class="logo-box" style="margin:0 auto 11px;">TNN<br>16</div>
+      <div style="font-size:18px;font-weight:800;color:var(--text);">TNN NewsDesk</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:2px;">ระบบบริหารงานข่าว — TNN Channel 16</div>
+    </div>
+    <div id="lerr" style="display:none;margin-bottom:11px;padding:8px 11px;border-radius:7px;font-size:12px;text-align:center;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#f87171;"></div>
+    <div style="display:flex;flex-direction:column;gap:9px;">
+      <div><label class="lbl">Username</label><input id="lu" class="inp" type="text" placeholder="กรอก username" autocomplete="username"></div>
+      <div>
+        <label class="lbl">Password</label>
+        <div style="position:relative;">
+          <input id="lp" class="inp" type="password" placeholder="กรอก password" style="padding-right:36px;" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+          <button onclick="togglePw()" type="button" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;"><i id="pw-i" class="fa-solid fa-eye"></i></button>
+        </div>
+      </div>
+      <button id="lbtn" onclick="login()" class="btn bp" style="width:100%;justify-content:center;margin-top:3px;padding:9px;">เข้าสู่ระบบ</button>
+    </div>
+    <div style="margin-top:16px;padding:11px;border-radius:8px;background:var(--bg);border:1px solid var(--border);">
+      <div style="font-size:9px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">บัญชีทดสอบ</div>
+      <div id="l-hints"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP ═══════════════ -->
+<div id="app">
+  <aside id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">TNN<br>16</div>
+      <div>
+        <div style="font-size:12.5px;font-weight:700;color:var(--text);">NewsDesk</div>
+        <div style="font-size:9px;color:var(--t3);">TNN Channel 16</div>
+      </div>
+    </div>
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <!-- Global Calendar -->
+    <div class="cal-wrap" id="cal-wrap">
+      <div class="cal-mode-bar">
+        <button class="cal-mode-btn on" onclick="calSetMode('day',this)">วัน</button>
+        <button class="cal-mode-btn"    onclick="calSetMode('month',this)">เดือน</button>
+        <button class="cal-mode-btn"    onclick="calSetMode('year',this)">ปี</button>
+        <button class="cal-mode-btn"    onclick="calSetMode('range',this)">ช่วง</button>
+        <button class="cal-mode-btn"    onclick="calSetMode('all',this)">ทั้งหมด</button>
+      </div>
+      <div class="cal-top">
+        <button class="cal-nav" onclick="calPrev()">‹</button>
+        <span class="cal-title" id="cal-title" onclick="calGoToday()"></span>
+        <button class="cal-nav" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="gd-label" id="gd-label"></div>
+    </div>
+
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <div class="sb-user">
+      <div id="sb-av" class="av" style="background:#1d4ed8;"></div>
+      <div style="flex:1;min-width:0;">
+        <div id="sb-name" style="font-size:11.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        <div id="sb-role" style="font-size:9.5px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      </div>
+      <button onclick="logout()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:3px;border-radius:5px;transition:color .15s;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='var(--t3)'" title="ออกจากระบบ"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+  </aside>
+  <div id="main">
+    <div id="topbar">
+      <div style="display:flex;align-items:center;gap:9px;">
+        <span id="pg-title"></span>
+        <span id="pg-badge" style="display:none;font-size:10px;padding:2px 7px;border-radius:5px;background:var(--adim);color:var(--acc);border:1px solid var(--aglow);font-family:var(--mono);"></span>
+      </div>
+      <div style="display:flex;gap:7px;align-items:center;">
+        <!-- Notification bell -->
+        <div style="position:relative;">
+          <button id="notif-btn" onclick="toggleNotifPanel()" style="background:var(--bg);border:1px solid var(--border);border-radius:7px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--t2);font-size:12px;transition:all .15s;position:relative;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--t2)'">
+            <i class="fa-solid fa-bell"></i>
+            <span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:8px;font-weight:700;min-width:16px;height:16px;border-radius:8px;padding:0 3px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);"></span>
+          </button>
+          <div id="notif-panel" style="display:none;position:absolute;top:calc(100%+6px);right:0;width:300px;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:100;max-height:360px;overflow-y:auto;"></div>
+        </div>
+        <div style="position:relative;">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:10px;pointer-events:none;"></i>
+          <input id="global-search" type="text" placeholder="ค้นหาหมาย..." oninput="globalSearch(this.value)" onfocus="this.style.width='180px'" onblur="if(!this.value)this.style.width='120px'"
+            style="font-size:11.5px;padding:4px 9px 4px 28px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text);outline:none;width:120px;transition:width .2s;font-family:var(--sans);">
+          <div id="search-results" style="display:none;position:absolute;top:calc(100%+4px);right:0;width:320px;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:100;max-height:320px;overflow-y:auto;"></div>
+        </div>
+        <span id="dt" class="pill"></span>
+        <span id="clk" class="pill"></span>
+      </div>
+    </div>
+    <div id="pg-wrap"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: RATING ═══════════════ -->
+<div id="m-rate" class="modal-ov">
+  <div class="modal-box fu" style="max-width:520px;">
+    <div style="height:3px;background:linear-gradient(90deg,var(--acc),#f5c518);border-radius:16px 16px 0 0;"></div>
+    <div class="mh">
+      <div>
+        <div style="font-size:14.5px;font-weight:700;color:var(--text);">ประเมินผลงาน</div>
+        <div id="mr-id" style="font-family:var(--mono);font-size:9.5px;color:var(--t3);margin-top:2px;"></div>
+      </div>
+      <button class="mcl" onclick="closeM('m-rate')">&times;</button>
+    </div>
+    <div class="mb">
+      <!-- ช่างภาพ + Job Weight badge -->
+      <div style="display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:14px;">
+        <div id="mr-av" class="av" style="background:#1d4ed8;width:32px;height:32px;font-size:11px;"></div>
+        <div style="flex:1;">
+          <div style="font-size:10px;color:var(--t3);">ช่างภาพ</div>
+          <div id="mr-cam" style="font-size:13px;font-weight:600;color:var(--text);"></div>
+        </div>
+        <div id="mr-weight-badge" style="text-align:center;padding:5px 10px;border-radius:8px;background:var(--adim);border:1px solid var(--aglow);">
+          <div style="font-size:9px;color:var(--t3);">Job Weight</div>
+          <div id="mr-weight-val" style="font-size:16px;font-weight:800;color:var(--acc);font-family:var(--mono);"></div>
+          <div id="mr-weight-lbl" style="font-size:8.5px;color:var(--t3);"></div>
+        </div>
+      </div>
+      <!-- 5 criteria -->
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:13px;" id="mr-criteria"></div>
+      <!-- comment -->
+      <div>
+        <label class="lbl">ข้อเสนอแนะ <span style="font-weight:400;color:var(--t4);">(ไม่บังคับ)</span></label>
+        <textarea id="mr-comment" class="inp" rows="2" placeholder="เช่น ควรแจ้งก่อนถึง location 15 นาที..."></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:7px;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.14);font-size:10.5px;color:#60a5fa;margin-top:9px;">
+        <i class="fa-solid fa-lock" style="font-size:9px;flex-shrink:0;"></i>
+        <span>Confidential — เฉพาะ Admin/บก. เท่านั้น</span>
+      </div>
+    </div>
+    <div class="mf">
+      <div style="flex:1;font-size:11px;color:var(--t3);">คะแนนรวม: <span id="mr-total" style="font-weight:700;color:var(--text);">0/10</span></div>
+      <button onclick="closeM('m-rate')" class="btn bg">ยกเลิก</button>
+      <button onclick="submitRating()" class="btn bp"><i class="fa-solid fa-check"></i> บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: EQUIP ═══════════════ -->
+<div id="m-equip" class="modal-ov">
+  <div class="modal-box fu" style="max-width:440px;">
+    <div class="mh" style="padding-bottom:14px;">
+      <div id="m-equip-title" style="font-size:14.5px;font-weight:700;color:var(--text);"></div>
+      <button class="mcl" onclick="closeM('m-equip')">&times;</button>
+    </div>
+    <div class="mb" style="padding-top:0;">
+      <input type="hidden" id="eq-edit-code">
+      <div class="g2" style="margin-bottom:9px;">
+        <div><label class="lbl">รหัสอุปกรณ์ *</label><input id="eq-code" class="inp" type="text" placeholder="CAM-005"></div>
+        <div>
+          <label class="lbl">ประเภท *</label>
+          <select id="eq-type" class="inp" onchange="eqTypeChange()"></select>
+          <div id="eq-type-new" style="display:none;margin-top:6px;">
+            <div style="display:flex;gap:6px;">
+              <input id="eq-type-custom-key" class="inp" style="flex:1;" type="text" placeholder="key (ไม่มีเว้นวรรค เช่น lens)">
+              <input id="eq-type-custom-lb"  class="inp" style="flex:2;" type="text" placeholder="ชื่อแสดง เช่น เลนส์">
+            </div>
+            <div style="font-size:9.5px;color:var(--t3);margin-top:3px;">สร้างหมวดหมู่ใหม่ในคลัง — จะปรากฏให้เลือกทุกที่</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:9px;"><label class="lbl">ชื่อ/รุ่น *</label><input id="eq-name" class="inp" type="text" placeholder="Sony FX9"></div>
+      <div><label class="lbl">สถานะ</label>
+        <select id="eq-status" class="inp">
+          <option value="available">ว่างพร้อมใช้</option>
+          <option value="in_use">ถูกเบิก</option>
+          <option value="maintenance">ส่งซ่อม</option>
+        </select>
+      </div>
+    </div>
+    <div class="mf">
+      <button onclick="closeM('m-equip')" class="btn bg">ยกเลิก</button>
+      <button onclick="saveEquip()" class="btn bp"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL: USER ═══════════════ -->
+<div id="m-user" class="modal-ov">
+  <div class="modal-box fu" style="max-width:500px;">
+    <div class="mh" style="padding-bottom:14px;">
+      <div style="font-size:14.5px;font-weight:700;color:var(--text);">เพิ่ม / แก้ไข บุคลากร</div>
+      <button class="mcl" onclick="closeM('m-user')">&times;</button>
+    </div>
+    <div class="mb" style="padding-top:0;">
+      <div class="g2" style="margin-bottom:9px;">
+        <div><label class="lbl">ชื่อ-สกุล *</label><input id="u-name" class="inp" type="text" placeholder="Firstname Lastname"></div>
+        <div><label class="lbl">รหัสพนักงาน</label><input id="u-empid" class="inp" type="text" placeholder="700XXXXX"></div>
+        <div><label class="lbl">Username *</label><input id="u-uname" class="inp" type="text" placeholder="firstname.l"></div>
+        <div><label class="lbl">Password *</label><input id="u-pass" class="inp" type="password" placeholder="ตั้งรหัสผ่าน"></div>
+      </div>
+      <div><label class="lbl">Role / ตำแหน่ง *</label>
+        <select id="u-role" class="inp">
+          <option value="">-- เลือก Role --</option>
+          <option value="admin">Admin — ผู้ดูแลระบบ</option>
+          <option value="chief_cam">Chief Cam — หัวหน้าช่างภาพ</option>
+          <option value="editor">Editor / บก. — ผู้ออกหมาย</option>
+          <option value="cameraman">Cameraman — ช่างภาพ</option>
+        </select>
+      </div>
+    </div>
+    <div class="mf">
+      <button onclick="closeM('m-user')" class="btn bg">ยกเลิก</button>
+      <button onclick="saveUser()" class="btn bp"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<!-- ═══════════════════ SCRIPT ═══════════════════ -->
+<script>
+/* ══════════════════════════════════════════════════════════
+   DATA
+══════════════════════════════════════════════════════════ */
+const USERS = {
+  admin:       { pass:'Guss0861199170**1', name:'Anurak Jaroensuk',    empid:'70003763', role:'admin',     title:'Admin' },
+  thanawat:    { pass:'tnn1234',           name:'Thanawat Suwannajan', empid:'70007232', role:'chief_cam', title:'Chief Cam' },
+  wachira:     { pass:'tnn1234',           name:'Wachira Phoophuak',   empid:'70007229', role:'chief_cam', title:'Chief Cam' },
+  editor1:     { pass:'tnn1234',           name:'สมชาย ใจดี',           empid:'',         role:'editor',    title:'บรรณาธิการ' },
+  editor2:     { pass:'tnn1234',           name:'วิไล มีสุข',            empid:'',         role:'editor',    title:'บรรณาธิการ' },
+  anuwat:          { pass:'tnn1234', name:'Anuwat Sangsawat',          empid:'', role:'cameraman', title:'ช่างภาพ' },
+  arthitaya:       { pass:'tnn1234', name:'Arthitaya Piriyachananant', empid:'', role:'cameraman', title:'ช่างภาพ' },
+  sathaphan:       { pass:'tnn1234', name:'Sathaphan Yoosuk',          empid:'', role:'cameraman', title:'ช่างภาพ' },
+  jaran:           { pass:'tnn1234', name:'Jaran Pattana',             empid:'', role:'cameraman', title:'ช่างภาพ' },
+  jatuporn:        { pass:'tnn1234', name:'Jatuporn Chulacherm',       empid:'', role:'cameraman', title:'ช่างภาพ' },
+  kittipong:       { pass:'tnn1234', name:'Kittipong Premjaichon',     empid:'', role:'cameraman', title:'ช่างภาพ' },
+  lertchai:        { pass:'tnn1234', name:'Lertchai Ruengraeng',       empid:'', role:'cameraman', title:'ช่างภาพ' },
+  naradol:         { pass:'tnn1234', name:'Naradol Yusuk',             empid:'', role:'cameraman', title:'ช่างภาพ' },
+  natdanai:        { pass:'tnn1234', name:'Natdanai Pipat',            empid:'', role:'cameraman', title:'ช่างภาพ' },
+  natthawut:       { pass:'tnn1234', name:'Natthawut Rongsawad',       empid:'', role:'cameraman', title:'ช่างภาพ' },
+  nitikorn:        { pass:'tnn1234', name:'Nitikorn Promthong',        empid:'', role:'cameraman', title:'ช่างภาพ' },
+  noppadoll:       { pass:'tnn1234', name:'Noppadoll Meewongsom',      empid:'', role:'cameraman', title:'ช่างภาพ' },
+  palita:          { pass:'tnn1234', name:'Palita Chaikhiri',          empid:'', role:'cameraman', title:'ช่างภาพ' },
+  phatcharapong:   { pass:'tnn1234', name:'Phatcharapong Phansawat',   empid:'', role:'cameraman', title:'ช่างภาพ' },
+  pichet:          { pass:'tnn1234', name:'Pichet Chobkuntod',         empid:'', role:'cameraman', title:'ช่างภาพ' },
+  piya:            { pass:'tnn1234', name:'Piya Suwanloung',           empid:'', role:'cameraman', title:'ช่างภาพ' },
+  prakit:          { pass:'tnn1234', name:'Prakit Chanasumon',         empid:'', role:'cameraman', title:'ช่างภาพ' },
+  preecha:         { pass:'tnn1234', name:'Preecha Klinnoi',           empid:'', role:'cameraman', title:'ช่างภาพ' },
+  rungtiwa:        { pass:'tnn1234', name:'Rungtiwa Kotchada',         empid:'', role:'cameraman', title:'ช่างภาพ' },
+  thanapong:       { pass:'tnn1234', name:'Thanapong Rapanusit',       empid:'', role:'cameraman', title:'ช่างภาพ' },
+  thanawat_cam:    { pass:'tnn1234', name:'Thanawat Suwannajan',       empid:'', role:'cameraman', title:'ช่างภาพ' },
+  wachira_cam:     { pass:'tnn1234', name:'Wachira Phoophuak',         empid:'', role:'cameraman', title:'ช่างภาพ' },
+};
+const HINT_USERS = [
+  ['admin','Guss086…','Admin'],
+  ['thanawat','tnn1234','Chief Cam'],
+  ['editor1','tnn1234','บก.'],
+  ['anuwat','tnn1234','Cameraman'],
+];
+const RLABEL = { admin:'Admin', chief_cam:'หัวหน้าช่างภาพ', editor:'บก./ผู้ออกหมาย', cameraman:'ช่างภาพ' };
+const RBADGE = { admin:'badge-role-admin', chief_cam:'badge-role-chief', editor:'badge-role-editor', cameraman:'badge-role-cam' };
+
+const CAMERAMEN = [
+  {n:'Anuwat Sangsawat',    e:'',         r:'Senior'},
+  {n:'Arthitaya Piriyachananant', e:'',   r:'Senior'},
+  {n:'Sathaphan Yoosuk',    e:'',         r:'Senior'},
+  {n:'Jaran Pattana',       e:'70007244', r:'Associate'},
+  {n:'Jatuporn Chulacherm', e:'70007234', r:'Associate'},
+  {n:'Kittipong Premjaichon', e:'70007230', r:'Associate'},
+  {n:'Lertchai Ruengraeng', e:'70007225', r:'Associate'},
+  {n:'Naradol Yusuk',       e:'70007242', r:'Associate'},
+  {n:'Natdanai Pipat',      e:'70007236', r:'Associate'},
+  {n:'Natthawut Rongsawad', e:'70007243', r:'Associate'},
+  {n:'Nitikorn Promthong',  e:'70007238', r:'Associate'},
+  {n:'Noppadoll Meewongsom',e:'70007246', r:'Associate'},
+  {n:'Palita Chaikhiri',    e:'70007212', r:'Associate'},
+  {n:'Phatcharapong Phansawat', e:'70007224', r:'Associate'},
+  {n:'Pichet Chobkuntod',   e:'70007228', r:'Associate'},
+  {n:'Piya Suwanloung',     e:'70007226', r:'Associate'},
+  {n:'Prakit Chanasumon',   e:'70007235', r:'Associate'},
+  {n:'Preecha Klinnoi',     e:'70007237', r:'Associate'},
+  {n:'Rungtiwa Kotchada',   e:'70007211', r:'Associate'},
+  {n:'Thanapong Rapanusit', e:'70007240', r:'Associate'},
+  {n:'Thanawat Suwannajan', e:'70007232', r:'Associate'},
+  {n:'Wachira Phoophuak',   e:'70007229', r:'Associate'},
+];
+
+const CATS = ['การเมือง','เศรษฐกิจ','สังคม','อาชญากรรม','ต่างประเทศ','กีฬา','บันเทิง','สิ่งแวดล้อม','ออนไลน์','งานลูกค้า/การตลาด','ระบุ'];
+
+const DEFAULT_EQ_META = {
+  camera:{lb:'กล้องถ่ายทำ',ic:'fa-camera'},
+  liveu:{lb:'LiveU / Encoder',ic:'fa-tower-broadcast'},
+  mic:{lb:'ไมโครโฟน',ic:'fa-microphone'},
+  tripod:{lb:'ขาตั้งกล้อง',ic:'fa-video'},
+  light:{lb:'ไฟ LED',ic:'fa-lightbulb'},
+  drone:{lb:'โดรน',ic:'fa-helicopter'},
+  vehicle:{lb:'รถข่าว',ic:'fa-car'},
+  other:{lb:'อื่นๆ',ic:'fa-box'},
+};
+const EQ_KEY      = 'tnn_eq_v5';
+const AS_KEY      = 'tnn_as_v5';
+const EQ_META_KEY = 'tnn_eq_meta_v5';
+let EQ_META = loadEQMeta();
+
+const DEFAULT_EQ = [
+  {c:'CAM-001',n:'Sony FX3',t:'camera',s:'available',hrs:134},
+  {c:'CAM-002',n:'Sony A7S III',t:'camera',s:'available',hrs:98},
+  {c:'CAM-003',n:'Sony FX9',t:'camera',s:'in_use',hrs:312},
+  {c:'CAM-004',n:'Canon EOS R5C',t:'camera',s:'available',hrs:67},
+  {c:'LU-001',n:'LiveU Solo (1)',t:'liveu',s:'available',hrs:88},
+  {c:'LU-002',n:'LiveU Solo (2)',t:'liveu',s:'available',hrs:76},
+  {c:'LU-003',n:'LiveU Solo (3)',t:'liveu',s:'in_use',hrs:201},
+  {c:'LU-004',n:'LiveU LU300',t:'liveu',s:'available',hrs:44},
+  {c:'MIC-001',n:'ไมค์ลอย Sennheiser (1)',t:'mic',s:'available',hrs:155},
+  {c:'MIC-002',n:'ไมค์ลอย Sennheiser (2)',t:'mic',s:'available',hrs:130},
+  {c:'MIC-003',n:'ไมค์ลอย Sennheiser (3)',t:'mic',s:'in_use',hrs:188},
+  {c:'MIC-004',n:'ไมค์ลอย Sony (1)',t:'mic',s:'available',hrs:55},
+  {c:'TRP-001',n:'ขาตั้ง Vinten (1)',t:'tripod',s:'available',hrs:240},
+  {c:'TRP-002',n:'ขาตั้ง Vinten (2)',t:'tripod',s:'available',hrs:190},
+  {c:'LED-001',n:'ไฟ LED Aputure 300X (1)',t:'light',s:'available',hrs:110},
+  {c:'LED-002',n:'ไฟ LED Aputure 300X (2)',t:'light',s:'in_use',hrs:95},
+  {c:'DRN-001',n:'โดรน DJI Mavic 3',t:'drone',s:'available',hrs:42},
+  {c:'VHC-001',n:'กข-1234 (รถเก๋ง)',t:'vehicle',s:'available',hrs:0},
+  {c:'VHC-002',n:'ขค-5678 (รถกระบะ)',t:'vehicle',s:'available',hrs:0},
+  {c:'VHC-003',n:'นง-9999 (รถตู้)',t:'vehicle',s:'maintenance',hrs:0},
+];
+const DEFAULT_AS = [
+  {id:'TNN-20260328-101',title:'นายกฯ แถลงผลประชุม ครม. มาตรการเศรษฐกิจ',cat:'การเมือง',reporter:'สมชาย ใจดี',loc:'ทำเนียบรัฐบาล',date:'2026-03-28',ts:'13:00',te:'16:00',status:'assigned',issuer:'สมชาย ใจดี',cams:[{name:'Sathaphan Yoosuk',drive:true,equip:{camera:'CAM-001',liveu:'LU-001'}}],vhc:'กข-1234 (รถเก๋ง)',equip_rem:'LiveU Solo, ไมค์ลอย 2 ชุด'},
+  {id:'TNN-20260328-085',title:'เกาะติดน้ำท่วม ช่วงเช้า',cat:'สังคม',reporter:'วิไล มีสุข',loc:'อ.บางบาล อยุธยา',date:'2026-03-28',ts:'08:00',te:'12:00',status:'done',issuer:'วิไล มีสุข',cams:[{name:'Anuwat Sangsawat',drive:false,equip:{camera:'CAM-002'}}],vhc:'ขค-5678 (รถกระบะ)',equip_rem:'LiveU Solo',rating:4,r_comment:'ภาพดีมาก ครบทุก Shot'},
+  {id:'TNN-20260328-092',title:'บรรยากาศเลือกตั้งซ่อม เก็บภาพช่วงเย็น',cat:'การเมือง',reporter:'',loc:'หน่วยเลือกตั้งที่ 5 นนทบุรี',date:'2026-03-28',ts:'17:00',te:'21:00',status:'pending',issuer:'สมชาย ใจดี',equip_rem:'ไมค์ลอย 2 ชุด'},
+  {id:'TNN-20260329-045',title:'น้ำท่วม หมายต่อเนื่อง',cat:'สังคม',reporter:'',loc:'อ.บางบาล อยุธยา',date:'2026-03-29',ts:'08:00',te:'18:00',status:'pending',issuer:'วิไล มีสุข',equip_rem:'LiveU Solo, โดรน'},
+  {id:'TNN-20260327-088',title:'สัมภาษณ์พิเศษผู้ว่า ธปท.',cat:'เศรษฐกิจ',reporter:'สมชาย ใจดี',loc:'ธนาคารแห่งประเทศไทย',date:'2026-03-27',ts:'10:00',te:'12:00',status:'rated',issuer:'Anurak Jaroensuk',cams:[{name:'Natthawut Rongsawad',drive:true,equip:{camera:'CAM-003'}}],vhc:'กข-1234 (รถเก๋ง)',rating:5,r_comment:'ยอดเยี่ยม ตรงเวลา ภาพคมชัด'},
+  {id:'TNN-20260325-060',title:'สกู๊ปผู้ประสบภัยน้ำท่วม',cat:'สังคม',reporter:'วิไล มีสุข',loc:'จ.สุพรรณบุรี',date:'2026-03-25',ts:'09:00',te:'15:00',status:'rated',issuer:'วิไล มีสุข',cams:[{name:'Kittipong Premjaichon',drive:true,equip:{}}],vhc:'ขค-5678 (รถกระบะ)',rating:3,r_comment:'ช้ากว่ากำหนด 30 นาที'},
+];
+
+/* ══════════════════════════════════════════════════════════
+   STATE / STORAGE
+══════════════════════════════════════════════════════════ */
+// Global date selection — shared across all pages
+const GD = {
+  mode: 'day',          // 'day' | 'month' | 'year' | 'range' | 'all'
+  date: '',             // YYYY-MM-DD
+  month: '',            // YYYY-MM
+  year:  '',            // YYYY
+  rangeFrom: '',        // YYYY-MM-DD
+  rangeTo:   '',        // YYYY-MM-DD
+};
+let CU = null;   // current user
+let STAR = 0;    // rating state
+let EQUIP = loadEQ();
+let ASSIGN = loadAS();
+
+function loadEQ()     { try { const r = localStorage.getItem(EQ_KEY);      return r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULT_EQ)); }   catch { return JSON.parse(JSON.stringify(DEFAULT_EQ)); } }
+function loadEQMeta() { try { const r = localStorage.getItem(EQ_META_KEY); return r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULT_EQ_META)); } catch { return JSON.parse(JSON.stringify(DEFAULT_EQ_META)); } }
+function loadAS()  { try { const r = localStorage.getItem(AS_KEY); return r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULT_AS)); } catch { return JSON.parse(JSON.stringify(DEFAULT_AS)); } }
+function saveEQ()     { localStorage.setItem(EQ_KEY,      JSON.stringify(EQUIP)); }
+function saveEQMeta() { localStorage.setItem(EQ_META_KEY, JSON.stringify(EQ_META)); }
+function saveAS()  { localStorage.setItem(AS_KEY, JSON.stringify(ASSIGN)); }
+function reload()  { EQUIP = loadEQ(); ASSIGN = loadAS(); EQ_META = loadEQMeta(); }
+
+/* ══════════════════════════════════════════════════════════
+   MENUS
+══════════════════════════════════════════════════════════ */
+const MENUS = {
+  admin: [
+    {g:'หลัก'},
+    {id:'dash',  ic:'fa-house',            lb:'กระดานข่าว'},
+    {id:'create',ic:'fa-file-signature',   lb:'ออกหมายข่าว'},
+    {g:'จัดการ'},
+    {id:'crew',  ic:'fa-users',            lb:'จัดทีมช่างภาพ', badge:true},
+    {id:'rating',ic:'fa-star-half-stroke', lb:'สรุปและประเมินผล'},
+    {id:'drive', ic:'fa-car-side',         lb:'รายงานค่าขับรถ'},
+    {g:'Admin'},
+    {id:'equip', ic:'fa-screwdriver-wrench',lb:'คลังอุปกรณ์'},
+    {id:'users',   ic:'fa-users-gear',       lb:'จัดการบุคลากร'},
+    {id:'appeals', ic:'fa-flag',             lb:'การโต้แย้ง', badge2:true},
+  ],
+  editor: [
+    {g:'หลัก'},
+    {id:'dash',  ic:'fa-house',            lb:'กระดานข่าว'},
+    {id:'create',ic:'fa-file-signature',   lb:'ออกหมายข่าว'},
+    {g:'รายงาน'},
+    {id:'rating',ic:'fa-star-half-stroke', lb:'ประเมินหมายของฉัน'},
+  ],
+  chief_cam: [
+    {g:'หลัก'},
+    {id:'dash',  ic:'fa-house',            lb:'กระดานข่าว'},
+    {id:'crew',  ic:'fa-users',            lb:'จัดทีมช่างภาพ', badge:true},
+    {id:'equip', ic:'fa-screwdriver-wrench',lb:'คลังอุปกรณ์'},
+  ],
+  cameraman: [
+    {g:'หลัก'},
+    {id:'dash',    ic:'fa-house',          lb:'กระดานข่าว'},
+    {id:'myscore', ic:'fa-chart-line',     lb:'ผลงานของฉัน'},
+  ],
+};
+const PTITLE = {
+  dash:'กระดานข่าวประจำช่อง', create:'ออกหมายข่าวใหม่',
+  crew:'จัดทีมงานและทรัพยากร', rating:'สรุปหมายและประเมินผล',
+  drive:'รายงานค่าขับรถ', equip:'คลังอุปกรณ์', users:'จัดการบุคลากร',
+  myscore:'ผลงานของฉัน', appeals:'การโต้แย้งผลประเมิน',
+};
+
+/* ══════════════════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════════════════ */
+// populate hints — safe DOM access
+function populateHints() {
+  const el = document.getElementById('l-hints');
+  if (!el) return;
+  el.innerHTML = HINT_USERS.map(u =>
+    `<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t2);margin-bottom:2px;">
+      <span style="font-family:var(--mono);">${u[0]}</span>
+      <span style="font-family:var(--mono);color:var(--t3);">${u[1]}</span>
+      <span style="color:var(--t3);">${u[2]}</span>
+    </div>`
+  ).join('');
+}
+
+function login() {
+  const u = document.getElementById('lu').value.trim();
+  const p = document.getElementById('lp').value;
+  const err = document.getElementById('lerr');
+  err.style.display = 'none';
+  if (!u || !p) { err.textContent = 'กรุณากรอก Username และ Password'; err.style.display = 'block'; return; }
+  const ud = USERS[u];
+  if (!ud || ud.pass !== p) { err.textContent = 'Username หรือ Password ไม่ถูกต้อง'; err.style.display = 'block'; return; }
+  const btn = document.getElementById('lbtn');
+  btn.innerHTML = '<i class="fa-solid fa-spinner sp" style="margin-right:6px;"></i>กำลังเข้าสู่ระบบ...';
+  btn.disabled = true;
+  CU = { ...ud, username: u };
+  setTimeout(() => {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('on');
+    initApp();
+  }, 500);
+}
+function logout() {
+  if (!confirm('ออกจากระบบ?')) return;
+  CU = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').classList.remove('on');
+  document.getElementById('lu').value = '';
+  document.getElementById('lp').value = '';
+  document.getElementById('lbtn').innerHTML = 'เข้าสู่ระบบ';
+  document.getElementById('lbtn').disabled = false;
+  document.getElementById('lerr').style.display = 'none';
+}
+function togglePw() {
+  const f = document.getElementById('lp'), i = document.getElementById('pw-i');
+  f.type = f.type === 'password' ? 'text' : 'password';
+  i.className = f.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+}
+
+/* ══════════════════════════════════════════════════════════
+   APP INIT
+══════════════════════════════════════════════════════════ */
+function initApp() {
+  const ini = CU.name.split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase() || '??';
+  const bgMap = {admin:'#7c3aed', chief_cam:'#0891b2', editor:'#1d4ed8', cameraman:'#b45309'};
+  const av = document.getElementById('sb-av');
+  av.textContent = ini; av.style.background = bgMap[CU.role] || '#444';
+  document.getElementById('sb-name').textContent = CU.name;
+  document.getElementById('sb-role').textContent = RLABEL[CU.role] || CU.role;
+  startClock();
+  calInit();       // init calendar state ก่อน
+  buildNav();      // build nav (ใช้ ASSIGN ที่โหลดแล้ว)
+  goPage('dash');  // render dashboard
+  setTimeout(() => updateNotifBadge(), 200);
+  setInterval(updateNotifBadge, 60000);
+}
+
+function buildNav() {
+  const items = MENUS[CU.role] || MENUS.cameraman;
+  reload();
+  const pend = ASSIGN.filter(a => a.status === 'pending').length;
+  document.getElementById('sb-nav').innerHTML = items.map(m => {
+    if (m.g) return `<div class="nav-grp">${m.g}</div>`;
+    const badge = m.badge && pend > 0 ? `<span class="nb-badge">${pend}</span>` : '';
+    return `<button class="nb" id="nb-${m.id}" onclick="goPage('${m.id}')"><i class="fa-solid ${m.ic}"></i><span style="flex:1;">${m.lb}</span>${badge}</button>`;
+  }).join('');
+}
+
+function goPage(id) {
+  reload();
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  const nb = document.getElementById('nb-' + id);
+  if (nb) nb.classList.add('on');
+  document.getElementById('pg-title').textContent = PTITLE[id] || id;
+  document.getElementById('pg-badge').style.display = 'none';
+  const w = document.getElementById('pg-wrap');
+  w.innerHTML = ''; w.style.cssText = 'flex:1;overflow:hidden;display:flex;flex-direction:column;';
+  ({ dash:pgDash, create:pgCreate, crew:pgCrew, rating:pgRating, drive:pgDrive, equip:pgEquip, users:pgUsers, myscore:pgMyScore, appeals:pgAppeals }[id] || function(){})();
+}
+
+function startClock() {
+  const DAYS = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+  const MO   = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const tick = () => {
+    const n = new Date();
+    document.getElementById('clk').textContent = n.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    document.getElementById('dt').textContent  = `วัน${DAYS[n.getDay()]}ที่ ${n.getDate()} ${MO[n.getMonth()]} ${n.getFullYear()+543}`;
+  };
+  tick(); setInterval(tick, 1000);
+}
+const ini  = n => n.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || '??';
+const today = () => new Date().toISOString().split('T')[0];
+
+/* ══════════════════════════════════════════════════════════
+   GLOBAL CALENDAR ENGINE
+══════════════════════════════════════════════════════════ */
+const CAL = {
+  year:  new Date().getFullYear(),
+  month: new Date().getMonth(),  // 0-based
+  rangeStep: 0,  // 0=pick from, 1=pick to
+};
+const MONTHS_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const DAYS_TH   = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+// Init with today
+function calInit() {
+  const n = new Date();
+  CAL.year = n.getFullYear(); CAL.month = n.getMonth();
+  GD.mode = 'day'; GD.date = today();
+  GD.month = today().slice(0,7); GD.year = String(n.getFullYear());
+  GD.rangeFrom = ''; GD.rangeTo = '';
+  calRender(); gdUpdateLabel();
+}
+
+function calSetMode(mode, btn) {
+  GD.mode = mode;
+  document.querySelectorAll('.cal-mode-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  // hide/show nav for 'all' and 'year' modes
+  const calGrid = document.getElementById('cal-grid');
+  const calTop  = document.querySelector('.cal-top');
+  if (mode === 'all') {
+    if (calGrid) calGrid.innerHTML = '';
+    if (calTop)  calTop.style.display = 'none';
+    gdUpdateLabel(); gdApply(); return;
+  }
+  if (calTop) calTop.style.display = '';
+  if (mode === 'year') { calRenderYearPicker(); gdUpdateLabel(); gdApply(); return; }
+  if (mode === 'month') { calRenderMonthPicker(); gdUpdateLabel(); gdApply(); return; }
+  if (mode === 'range') { CAL.rangeStep = 0; GD.rangeFrom=''; GD.rangeTo=''; }
+  calRender(); gdUpdateLabel();
+}
+
+function calRender() {
+  const y = CAL.year, m = CAL.month;
+  const titleEl = document.getElementById('cal-title');
+  if (titleEl) titleEl.textContent = MONTHS_TH[m] + ' ' + (y+543);
+  const firstDay = new Date(y,m,1).getDay();
+  const lastDate = new Date(y,m+1,0).getDate();
+  const prevLast = new Date(y,m,0).getDate();
+  const td = today();
+  // collect dates with data — support multi-day (capped 365 days)
+  const dateCounts = {};
+  ASSIGN.forEach(a => {
+    if (!a.date) return;
+    const end = (a.date2 && a.date2 > a.date) ? a.date2 : a.date;
+    let cur = a.date;
+    let safety = 0;
+    while (cur <= end && safety < 365) {
+      safety++;
+      dateCounts[cur] = (dateCounts[cur]||0)+1;
+      if (cur === end) break;
+      const d = new Date(cur+'T00:00:00'); d.setDate(d.getDate()+1);
+      cur = d.toISOString().split('T')[0];
+    }
+  });
+  const cells = [];
+  // header
+  DAYS_TH.forEach(d => cells.push(`<div class="cal-hd">${d}</div>`));
+  const total = 42;  // always 6 rows — keeps calendar height constant
+  for (let i=0; i<total; i++) {
+    let day, dateStr, cls='cal-day';
+    if (i < firstDay) {
+      day = prevLast-firstDay+1+i;
+      dateStr = fmtDate(y, m-1, day); cls += ' other';
+    } else if (i < firstDay+lastDate) {
+      day = i-firstDay+1;
+      dateStr = fmtDate(y, m, day);
+      if (dateStr===td) cls += ' today';
+      if (dateCounts[dateStr]) cls += ' has-data';
+      if (GD.mode==='day' && dateStr===GD.date) cls += ' sel';
+      if (GD.mode==='range') {
+        if (dateStr===GD.rangeFrom||dateStr===GD.rangeTo) cls += ' range-edge sel';
+        else if (GD.rangeFrom&&GD.rangeTo&&dateStr>GD.rangeFrom&&dateStr<GD.rangeTo) cls += ' in-range';
+      }
+    } else {
+      day = i-firstDay-lastDate+1;
+      dateStr = fmtDate(y, m+1, day); cls += ' other';
+    }
+    cells.push(`<div class="${cls}" onclick="calClickDay('${dateStr}')">${day}</div>`);
+  }
+  const el = document.getElementById('cal-grid');
+  if (el) el.innerHTML = cells.join('');
+}
+
+function calRenderMonthPicker() {
+  const titleEl = document.getElementById('cal-title');
+  if (titleEl) titleEl.textContent = String(CAL.year+543);
+  const el = document.getElementById('cal-grid');
+  if (!el) return;
+  const cur = GD.month;
+  /* Reset to fixed columns and fill all 42 cells to keep height constant */
+  el.style.gridTemplateColumns = '';
+  el.style.gridTemplateRows = '';
+  /* 12 months + 30 empty spacers = 42 cells = 6 rows × 7 cols */
+  const cells = MONTHS_TH.map((m,i) => {
+    const val = fmtDate(CAL.year, i, 1).slice(0,7);
+    const hasDat = ASSIGN.some(a=>a.date&&a.date.slice(0,7)===val);
+    const isSel  = val === cur;
+    return `<div class="cal-day${isSel?' sel':''}${hasDat?' has-data':''}" style="font-size:10px;" onclick="calClickMonth('${val}')">${m}</div>`;
+  });
+  /* pad to 42 */
+  while (cells.length < 42) cells.push('<div class="cal-day other" style="cursor:default;"></div>');
+  /* header row: 7 empty */
+  el.innerHTML = '<div class="cal-hd"></div>'.repeat(7) + cells.join('');
+}
+
+function calRenderYearPicker() {
+  const titleEl = document.getElementById('cal-title');
+  if (titleEl) titleEl.textContent = `${CAL.year-3+543}–${CAL.year+2+543}`;
+  const el = document.getElementById('cal-grid');
+  if (!el) return;
+  /* Reset to fixed 7-column grid, keep 42 total cells */
+  el.style.gridTemplateColumns = '';
+  el.style.gridTemplateRows = '';
+  const yrs = [CAL.year-3,CAL.year-2,CAL.year-1,CAL.year,CAL.year+1,CAL.year+2];
+  const cells = yrs.map(y => {
+    const hasDat = ASSIGN.some(a=>a.date&&a.date.slice(0,4)===String(y));
+    const isSel  = String(y) === GD.year;
+    return `<div class="cal-day${isSel?' sel':''}${hasDat?' has-data':''}" style="font-size:10px;" onclick="calClickYear('${y}')">${y+543}</div>`;
+  });
+  /* pad to 42 */
+  while (cells.length < 42) cells.push('<div class="cal-day other" style="cursor:default;"></div>');
+  el.innerHTML = '<div class="cal-hd"></div>'.repeat(7) + cells.join('');
+}
+
+function calClickDay(dateStr) {
+  if (GD.mode === 'range') {
+    if (CAL.rangeStep === 0) {
+      GD.rangeFrom = dateStr; GD.rangeTo = '';
+      CAL.rangeStep = 1;
+    } else {
+      if (dateStr < GD.rangeFrom) { GD.rangeTo=GD.rangeFrom; GD.rangeFrom=dateStr; }
+      else GD.rangeTo = dateStr;
+      CAL.rangeStep = 0;
+    }
+    calRender(); gdUpdateLabel(); gdApply(); return;
+  }
+  GD.date = dateStr;
+  // navigate calendar if clicking other-month day
+  const [y,m] = dateStr.split('-').map(Number);
+  CAL.year = y; CAL.month = m-1;
+  calRender(); gdUpdateLabel(); gdApply();
+}
+function calClickMonth(ym) {
+  GD.month = ym; const [y,m] = ym.split('-').map(Number);
+  CAL.year = y; CAL.month = m-1;
+  calRenderMonthPicker(); gdUpdateLabel(); gdApply();
+}
+function calClickYear(y) {
+  GD.year = String(y); CAL.year = y;
+  calRenderYearPicker(); gdUpdateLabel(); gdApply();
+}
+
+function calPrev() {
+  if (GD.mode==='month') { CAL.year--; calRenderMonthPicker(); }
+  else if (GD.mode==='year') { CAL.year-=6; calRenderYearPicker(); }
+  else { CAL.month--; if(CAL.month<0){CAL.month=11;CAL.year--;} calRender(); }
+}
+function calNext() {
+  if (GD.mode==='month') { CAL.year++; calRenderMonthPicker(); }
+  else if (GD.mode==='year') { CAL.year+=6; calRenderYearPicker(); }
+  else { CAL.month++; if(CAL.month>11){CAL.month=0;CAL.year++;} calRender(); }
+}
+function calGoToday() {
+  const n=new Date(); CAL.year=n.getFullYear(); CAL.month=n.getMonth();
+  GD.date=today(); GD.month=today().slice(0,7); GD.year=String(n.getFullYear());
+  calRender(); gdUpdateLabel(); gdApply();
+}
+
+function fmtDate(y,m,d) {
+  const dt = new Date(y,m,d);
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
+
+function gdUpdateLabel() {
+  const el = document.getElementById('gd-label'); if (!el) return;
+  let txt = '';
+  if (GD.mode==='all') txt = 'ดูทั้งหมด';
+  else if (GD.mode==='day')   txt = 'วันที่ <span>' + GD.date + '</span>';
+  else if (GD.mode==='month') txt = 'เดือน <span>' + GD.month + '</span>';
+  else if (GD.mode==='year')  txt = 'ปี <span>' + (parseInt(GD.year)+543) + '</span>';
+  else if (GD.mode==='range') {
+    if (!GD.rangeFrom) txt = 'คลิกวันเริ่มต้น';
+    else if (!GD.rangeTo) txt = '<span>' + GD.rangeFrom + '</span> → คลิกวันสิ้นสุด';
+    else txt = '<span>' + GD.rangeFrom + '</span> ถึง <span>' + GD.rangeTo + '</span>';
+  }
+  el.innerHTML = txt;
+}
+
+// Apply GD to current page — refresh all pages that depend on date filter
+function gdApply() {
+  const cur = document.getElementById('pg-title')?.textContent;
+  if      (cur===PTITLE.dash)   dRender();
+  else if (cur===PTITLE.rating) { if (typeof rtRenderScore==='function') rtRenderScore(); }
+  else if (cur===PTITLE.drive)  { if (typeof driveRender==='function')   driveRender(); }
+  // update badge only (no full buildNav)
+  const pend = ASSIGN.filter(a=>a.status==='pending').length;
+  const b = document.querySelector('.nb-badge');
+  if (b) b.textContent = pend;
+}
+
+// Filter ASSIGN by global GD
+function assignCoversDate(a, d) {
+  // หมายมีวันเดียว หรือ multi-day (date→date2)
+  if (a.date2 && a.date2 > a.date) return d >= a.date && d <= a.date2;
+  return a.date === d;
+}
+function assignInMonth(a, ym) {
+  if (a.date2 && a.date2 > a.date) return a.date.slice(0,7)<=ym && a.date2.slice(0,7)>=ym;
+  return a.date.slice(0,7) === ym;
+}
+function assignInYear(a, y) {
+  if (a.date2 && a.date2 > a.date) return a.date.slice(0,4)<=y && a.date2.slice(0,4)>=y;
+  return a.date.slice(0,4) === y;
+}
+function gdFilter(list) {
+  if (GD.mode==='all') return list;
+  if (GD.mode==='day')   return list.filter(a=>assignCoversDate(a,GD.date));
+  if (GD.mode==='month') return list.filter(a=>assignInMonth(a,GD.month));
+  if (GD.mode==='year')  return list.filter(a=>assignInYear(a,GD.year));
+  if (GD.mode==='range'&&GD.rangeFrom&&GD.rangeTo)
+    return list.filter(a=>{
+      const s=a.date, e=a.date2||a.date;
+      return s<=GD.rangeTo && e>=GD.rangeFrom;
+    });
+  return list;
+}
+
+/* ══════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════ */
+function toast(msg, type = 'ok') {
+  const el = document.createElement('div');
+  const icon = type==='err'?'fa-circle-xmark':type==='warn'?'fa-triangle-exclamation':'fa-circle-check';
+  el.className = 'toast' + (type==='err'?' err':type==='warn'?' warn':'');
+  el.innerHTML = `<i class="fa-solid ${icon}" style="margin-right:6px;"></i>${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+/* ══════════════════════════════════════════════════════════
+   STATUS MAP
+══════════════════════════════════════════════════════════ */
+const SMAP = {
+  pending:    { cls:'b-pend',   lb:'รอจัดทีม',        dot:'#ef4444' },
+  assigned:   { cls:'b-asgn',   lb:'กำลังปฏิบัติ',    dot:'#3b82f6' },
+  travelling: { cls:'b-travel', lb:'กำลังเดินทาง',    dot:'#a78bfa' },
+  done:       { cls:'b-done',   lb:'เสร็จสิ้น',        dot:'#22c55e' },
+  rated:      { cls:'b-rate',   lb:'ประเมินแล้ว',      dot:'#eab308' },
+};
+const sm = s => SMAP[s] || { cls:'b-pend', lb:'?', dot:'#888' };
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: DASHBOARD
+══════════════════════════════════════════════════════════ */
+function pgDash() {
+  const filtered = gdFilter([...ASSIGN]);
+  const cnt = {
+    all:  filtered.length,
+    pend: filtered.filter(a => a.status==='pending').length,
+    asgn: filtered.filter(a => a.status==='assigned').length,
+    done: filtered.filter(a => ['done','rated'].includes(a.status)).length,
+  };
+  const w = document.getElementById('pg-wrap');
+  w.innerHTML = `
+  <div class="pg fu">
+    <div style="max-width:900px;margin:0 auto;">
+      <div class="g4" style="margin-bottom:18px;">
+        ${[
+          {l:'หมายทั้งหมด',  v:cnt.all,  c:'var(--text)', ic:'fa-list-ul'},
+          {l:'รอจัดทีม',     v:cnt.pend, c:'#f87171',     ic:'fa-clock'},
+          {l:'กำลังปฏิบัติ', v:cnt.asgn, c:'#60a5fa',     ic:'fa-tower-broadcast'},
+          {l:'เสร็จวันนี้',   v:cnt.done, c:'#4ade80',     ic:'fa-check-double'},
+        ].map(s => `
+          <div class="stat">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:10px;color:var(--t3);margin-bottom:4px;">${s.l}</div>
+                <div style="font-size:24px;font-weight:800;color:${s.c};">${s.v}</div>
+              </div>
+              <div style="width:32px;height:32px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;">
+                <i class="fa-solid ${s.ic}" style="font-size:11px;color:var(--t3);"></i>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;flex-wrap:wrap;gap:7px;">
+        <div style="display:flex;align-items:center;gap:7px;">
+          <div id="d-gd-pill" style="font-size:11px;padding:4px 10px;border-radius:7px;background:var(--adim);color:var(--acc);border:1px solid var(--aglow);"></div>
+          <button onclick="exportDailyPDF()" class="btn bg bsm" style="font-size:10.5px;"><i class="fa-solid fa-print"></i> Print</button>
+        </div>
+        <select id="d-sf" onchange="dRender()" class="inp" style="width:auto;font-size:11.5px;padding:5px 10px;">
+          <option value="">ทุกสถานะ</option>
+          <option value="pending">รอจัดทีม</option>
+          <option value="assigned">กำลังปฏิบัติ</option>
+          <option value="done">เสร็จสิ้น</option>
+          <option value="rated">ประเมินแล้ว</option>
+        </select>
+      </div>
+      <!-- Shift note -->
+      <div id="shift-note-bar" style="margin-bottom:12px;"></div>
+      <div id="d-cards"></div>
+    </div>
+  </div>`;
+  window._dseg = 'today';
+  dRender();
+  renderShiftNote();
+}
+
+function dSeg(v, btn) {
+  window._dseg = v;
+  btn.closest('.seg').querySelectorAll('.sb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  dRender();
+}
+
+function dSeg(){}  // compat stub
+function dRender() {
+  const sf  = document.getElementById('d-sf')?.value || '';
+  let list = gdFilter([...ASSIGN]);
+  if (sf) list = list.filter(a => a.status === sf);
+  list.sort((a,b) => (a.date+a.ts).localeCompare(b.date+b.ts));
+  // update pill
+  const pill = document.getElementById('d-gd-pill');
+  if (pill) {
+    const MODE_LBL = {day:'วันที่ '+GD.date, month:'เดือน '+GD.month, year:'ปี '+(parseInt(GD.year)+543), all:'ทั้งหมด', range: GD.rangeFrom&&GD.rangeTo?GD.rangeFrom+' → '+GD.rangeTo:'เลือกช่วงจากปฏิทิน'};
+    pill.textContent = MODE_LBL[GD.mode]||'';
+  }
+  const el = document.getElementById('d-cards');
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = `<div style="text-align:center;padding:50px 20px;color:var(--t3);"><i class="fa-regular fa-calendar-xmark" style="font-size:30px;opacity:.4;display:block;margin-bottom:9px;"></i>ไม่มีหมายในช่วงเวลานี้</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="timeline">${list.map(a => tlCard(a)).join('')}</div>`;
+}
+
+function tlCard(a) {
+  const s = sm(a.status);
+  // permissions
+  const canRate   = a.status==='done' && (CU.role==='admin' || (CU.role==='editor' && a.issuer===CU.name));
+  const isMyJob   = ['assigned','travelling'].includes(a.status) && (
+    (CU.role==='editor'   && a.issuer===CU.name) ||
+    (CU.role==='admin') ||
+    (CU.role==='cameraman' && (a.cams||[]).some(c=>c.name===CU.name))
+  );
+  const canFinish   = isMyJob;
+  const canTravel   = a.status==='assigned' && CU.role==='cameraman' && (a.cams||[]).some(c=>c.name===CU.name);
+  const canEdit   = ['pending','assigned'].includes(a.status) &&
+    (CU.role==='admin' || (CU.role==='editor' && a.issuer===CU.name));
+  // cam display (no rating stars, no comment on dashboard)
+  const camBits = (a.cams||[]).length ? (a.cams||[]).map(c =>
+    `<span><i class="fa-solid fa-camera" style="color:var(--t3);margin-right:4px;"></i>${c.name}${c.drive?'<span style="color:#4ade80;font-size:9.5px;margin-left:3px;font-family:var(--mono);">+150฿/วัน</span>':""}</span>`
+  ).join('') : `<span style="color:var(--t3);font-style:italic;">รอจัดช่างภาพ</span>`;
+  // map link
+  const mapBtn = a.loc ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.loc)}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#60a5fa;text-decoration:none;border:1px solid rgba(59,130,246,.18);padding:2px 7px;border-radius:5px;background:rgba(59,130,246,.05);">
+    <i class="fa-solid fa-map-location-dot" style="font-size:9px;"></i>แผนที่</a>` : '';
+  return `
+  <div class="tli">
+    <div class="tld" style="background:${s.dot};${a.status==='assigned'?'box-shadow:0 0 7px '+s.dot+'55;':''}"></div>
+    <div class="card" style="padding:13px 15px;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--bh)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:9px;margin-bottom:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:var(--mono);font-size:8.5px;color:var(--t3);margin-bottom:2px;">${a.id}</div>
+          <div style="font-size:13.5px;font-weight:700;color:var(--text);line-height:1.35;">${a.title}</div>
+        </div>
+        <span class="badge ${s.cls}" style="flex-shrink:0;">${s.lb}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:10.5px;color:var(--t2);margin-bottom:8px;align-items:center;">
+        <span><i class="fa-solid fa-location-dot" style="color:var(--acc);margin-right:4px;"></i>${a.loc}</span>
+        <span><i class="fa-regular fa-clock" style="margin-right:3px;opacity:.5;"></i>${a.date2&&a.date2>a.date?a.date+'→'+a.date2:a.date} ${a.ts}${a.te?'–'+a.te:''}</span>
+        <span style="background:var(--bg);padding:1px 6px;border-radius:4px;border:1px solid var(--border);font-size:9.5px;">${a.cat||''}</span>
+        ${mapBtn}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:9px;font-size:11.5px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:7px;">
+        ${a.reporter?`<span><i class="fa-solid fa-microphone-lines" style="color:var(--t3);margin-right:4px;"></i>${a.reporter}</span>`:''}
+        ${camBits}
+        ${a.vhc?`<span><i class="fa-solid fa-car" style="color:var(--t3);margin-right:4px;"></i>${a.vhc}</span>`:''}
+      </div>
+      ${a.equip_rem?`<div style="margin-top:6px;font-size:10.5px;padding:5px 9px;border-radius:6px;background:var(--adim);border:1px solid var(--aglow);color:var(--acc);"><i class="fa-solid fa-box" style="margin-right:5px;opacity:.7;"></i>${a.equip_rem}</div>`:''}
+      <div style="margin-top:9px;display:flex;justify-content:flex-end;gap:6px;">
+        ${canEdit?`<button onclick="editAssign('${a.id}')" class="btn bg bsm"><i class="fa-solid fa-pen"></i> แก้ไข</button>`:``}
+        ${canTravel?`<button onclick="setTravelling('${a.id}')" class="btn bsm" style="background:rgba(167,139,250,.1);color:#a78bfa;border:1px solid rgba(167,139,250,.22);"><i class="fa-solid fa-car-side"></i> กำลังเดินทาง</button>`:``}
+        ${canRate?`<button onclick="openRating('${a.id}')" class="btn bp bsm"><i class="fa-solid fa-star"></i> ประเมินผล</button>`:``}
+        ${canFinish?`<button onclick="finishJob('${a.id}')" class="btn bgreen bsm"><i class="fa-solid fa-flag-checkered"></i> จบงาน</button>`:``}
+      </div>
+    </div>
+  </div>`;
+}
+
+function setTravelling(id) {
+  const i = ASSIGN.findIndex(a=>a.id===id); if (i<0) return;
+  ASSIGN[i].status = 'travelling';
+  saveAS(); dRender(); updateNotifBadge();
+  toast('อัปเดตสถานะ: กำลังเดินทาง 🚗');
+}
+function finishJob(id) {
+  const i = ASSIGN.findIndex(x => x.id===id); if (i<0) return;
+  if (!['assigned','travelling'].includes(ASSIGN[i].status)) return;
+  const a = ASSIGN[i];   // declare once
+  ASSIGN[i].status = 'done';
+  saveAS();
+  // คืนอุปกรณ์และรถกลับ available
+  (a.cams||[]).forEach(c => {
+    (c.equipList||[]).forEach(code => {
+      const ei = EQUIP.findIndex(e=>e.c===code);
+      if (ei>=0 && EQUIP[ei].s==='in_use') EQUIP[ei].s='available';
+    });
+  });
+  if (a.vhc) {
+    const vi = EQUIP.findIndex(e=>e.n===a.vhc||e.c===a.vhc);
+    if (vi>=0 && EQUIP[vi].s==='in_use') EQUIP[vi].s='available';
+  }
+  saveEQ();
+  // ถ้าผู้กดคือผู้ออกหมาย หรือ admin → เปิด rating modal ทันที
+  const isIssuer = CU.role==='admin' || (CU.role==='editor' && a.issuer===CU.name);
+  if (isIssuer) {
+    dRender();
+    toast('บันทึกจบงานแล้ว — กรุณาประเมินผลงานช่างภาพ');
+    setTimeout(() => openRating(id), 300);
+  } else {
+    toast('บันทึกจบงานแล้ว — รอการประเมินจากผู้ออกหมาย');
+    dRender();
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: CREATE
+══════════════════════════════════════════════════════════ */
+let _mpTimer;
+function pgCreate() {
+  const td = today();
+  // Sequential counter per date — ไม่ซ้ำ
+  const dateKey2 = td.replace(/-/g,'');
+  const existSameDay = ASSIGN.filter(a=>a.date===td).length;
+  const seqNum = String(existSameDay + 1).padStart(3,'0');
+  const rid = `TNN-${dateKey2}-${seqNum}`;
+  const w = document.getElementById('pg-wrap');
+  w.innerHTML = `
+  <div class="pg fu">
+    <div style="max-width:720px;margin:0 auto;">
+      <!-- Header -->
+      <div class="card" style="padding:13px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div>
+          <div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">รหัสหมายข่าว</div>
+          <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--acc);">${rid}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:30px;height:30px;border-radius:50%;background:#1d4ed8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:10px;">${ini(CU.name)}</div>
+          <div><div style="font-size:9px;color:var(--t3);">ผู้ออกหมาย</div><div style="font-size:12.5px;font-weight:600;color:var(--text);">${CU.name}</div></div>
+        </div>
+      </div>
+      <!-- Section 1 -->
+      <div class="card" style="padding:16px;margin-bottom:11px;">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:14px;">
+          <div class="step-num">1</div>
+          <span style="font-size:12px;font-weight:700;color:var(--text);">ข้อมูลข่าว</span>
+        </div>
+        <div style="margin-bottom:9px;"><label class="lbl">ชื่องาน / หัวข้อข่าว *</label><input id="f-title" class="inp" type="text" placeholder="เช่น นายกฯ แถลงผลการประชุม ครม."></div>
+        <div class="g2">
+          <div>
+            <label class="lbl">ประเภทข่าว *</label>
+            <select id="f-cat" class="inp" onchange="catChange()">
+              <option value="" disabled selected>-- เลือก --</option>
+              ${CATS.map(c=>`<option>${c}</option>`).join('')}
+            </select>
+            <div id="f-cat-other" style="display:none;margin-top:6px;">
+              <input id="f-cat-custom" class="inp" type="text" placeholder="ระบุประเภทข่าว...">
+            </div>
+          </div>
+          <div><label class="lbl">ผู้สื่อข่าว</label>
+            <select id="f-rep" class="inp">
+              <option value="">-- รอจัดภายหลัง --</option>
+              <option>สมชาย ใจดี</option><option>วิไล มีสุข</option><option>ประยุทธ์ สมใจ</option><option>รัตนา คงดี</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <!-- Section 2 -->
+      <div class="card" style="padding:16px;margin-bottom:11px;">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:14px;">
+          <div class="step-num">2</div>
+          <span style="font-size:12px;font-weight:700;color:var(--text);">วันเวลาและสถานที่</span>
+        </div>
+        <div class="g2" style="margin-bottom:9px;">
+          <div><label class="lbl">วันที่เริ่ม *</label><input id="f-date" class="inp" type="date" value="${td}"></div>
+          <div><label class="lbl">ถึงวันที่ <span style="font-size:9px;opacity:.5;">(หลายวัน)</span></label><input id="f-date2" class="inp" type="date"></div>
+          <div><label class="lbl">เวลาเริ่ม *</label><input id="f-ts" class="inp" type="time"></div>
+          <div><label class="lbl">เวลาเลิก</label><input id="f-te" class="inp" type="time"></div>
+        </div>
+        <div>
+          <label class="lbl">สถานที่ *</label>
+          <div style="position:relative;margin-bottom:9px;">
+            <i class="fa-solid fa-location-dot" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:11px;pointer-events:none;"></i>
+            <input id="f-loc" class="inp" style="padding-left:30px;" type="text" placeholder="ชื่อสถานที่ หรือวาง Google Maps URL" oninput="mpPrev()">
+          </div>
+          <div style="border-radius:9px;border:1px solid var(--border);overflow:hidden;background:var(--bg);height:170px;position:relative;">
+            <div id="mp-ph" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--t3);gap:6px;pointer-events:none;">
+              <i class="fa-solid fa-map-location-dot" style="font-size:22px;opacity:.4;"></i>
+              <span style="font-size:11px;">พิมพ์สถานที่เพื่อดูแผนที่</span>
+            </div>
+            <iframe id="mp-fr" style="width:100%;height:100%;opacity:0;transition:opacity .5s;border:none;" allowfullscreen loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+      <!-- Section 3 -->
+      <div class="card" style="padding:16px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:14px;">
+          <div class="step-num">3</div>
+          <span style="font-size:12px;font-weight:700;color:var(--text);">บรีฟงานและอุปกรณ์</span>
+        </div>
+        <div style="margin-bottom:11px;">
+          <label class="lbl">รายละเอียดงาน / บรีฟ</label>
+          <textarea id="f-detail" class="inp" rows="3" placeholder="บรีฟเพิ่มเติม เช่น มุมกล้อง รูปแบบภาพที่ต้องการ..."></textarea>
+        </div>
+        <div>
+          <label class="lbl" style="margin-bottom:6px;">รีมาร์กอุปกรณ์พิเศษ</label>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;">
+            ${Object.entries(EQ_META).filter(([k])=>k!=='vehicle').map(([k,m])=>
+              EQUIP.filter(e=>e.t===k&&e.s==='available').map(e=>
+                `<button type="button" onclick="addTag('${e.c} ${e.n}')" style="padding:3px 10px;font-size:10.5px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--t2);cursor:pointer;transition:all .15s;font-family:var(--sans);" onmouseover="this.style.borderColor='var(--acc)';this.style.color='var(--acc)';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--t2)';">${m.lb}: ${e.n}</button>`
+              ).join('')
+            ).join('')}
+          </div>
+          <input id="f-eq" class="inp" type="text" placeholder="คลิกเลือกหรือพิมพ์เพิ่มเติม...">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;">
+        <button onclick="goPage('dash')" class="btn bg"><i class="fa-solid fa-arrow-left"></i> กลับ</button>
+        <div style="display:flex;gap:7px;">
+          <button class="btn bg"><i class="fa-regular fa-floppy-disk"></i> บันทึกแบบร่าง</button>
+          <button onclick="submitCreate('${rid}')" class="btn bp"><i class="fa-solid fa-paper-plane"></i> ส่งหมายข่าว</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function mpPrev() {
+  clearTimeout(_mpTimer);
+  const loc = document.getElementById('f-loc')?.value?.trim();
+  const fr = document.getElementById('mp-fr'), ph = document.getElementById('mp-ph');
+  if (loc && loc.length > 2) {
+    _mpTimer = setTimeout(() => {
+      fr.src = `https://maps.google.com/maps?q=${encodeURIComponent(loc)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+      fr.style.opacity = '1'; if (ph) ph.style.opacity = '0';
+    }, 900);
+  } else {
+    fr.style.opacity = '0'; if (ph) ph.style.opacity = '1'; fr.src = '';
+  }
+}
+function addTag(t) {
+  const el = document.getElementById('f-eq');
+  if (el) el.value = el.value ? (el.value.includes(t) ? el.value : el.value+', '+t) : t;
+}
+function catChange() {
+  const v = document.getElementById('f-cat')?.value;
+  const d = document.getElementById('f-cat-other');
+  if (d) d.style.display = v === 'ระบุ' ? 'block' : 'none';
+}
+function editAssign(id) {
+  const a = ASSIGN.find(x=>x.id===id); if (!a) return;
+  // navigate to create page then pre-fill
+  goPage('create');
+  setTimeout(() => {
+    document.getElementById('f-title').value  = a.title||'';
+    document.getElementById('f-cat').value    = a.cat||'';
+    document.getElementById('f-rep').value    = a.reporter||'';
+    document.getElementById('f-date').value   = a.date||'';
+    document.getElementById('f-date2').value  = a.date2||'';
+    document.getElementById('f-ts').value     = a.ts||'';
+    document.getElementById('f-te').value     = a.te||'';
+    document.getElementById('f-loc').value    = a.loc||'';
+    document.getElementById('f-eq').value     = a.equip_rem||'';
+    document.getElementById('f-detail').value = a.detail||'';
+    // swap submit button to "บันทึกการแก้ไข"
+    const pg = document.getElementById('pg-wrap');
+    const btns = pg.querySelectorAll('.btn.bp');
+    btns.forEach(b => {
+      if (b.textContent.includes('ส่งหมาย')) {
+        b.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกการแก้ไข';
+        b.onclick = () => saveEditAssign(id);
+      }
+    });
+    // update header ID display
+    const ridEl = pg.querySelector('[style*="var(--acc)"]');
+    if (ridEl && ridEl.textContent.startsWith('TNN-')) ridEl.textContent = id;
+  }, 50);
+}
+function saveEditAssign(id) {
+  const title = document.getElementById('f-title')?.value?.trim();
+  const loc   = document.getElementById('f-loc')?.value?.trim();
+  const catSel= document.getElementById('f-cat')?.value;
+  const cat   = catSel==='ระบุ' ? (document.getElementById('f-cat-custom')?.value?.trim()||'ระบุ') : catSel;
+  const ts    = document.getElementById('f-ts')?.value;
+  if (!title||!cat||!loc||!ts) { toast('กรุณากรอกข้อมูลที่จำเป็น','err'); return; }
+  const i = ASSIGN.findIndex(a=>a.id===id); if (i<0) return;
+  Object.assign(ASSIGN[i], {
+    title, cat, loc, ts,
+    date: document.getElementById('f-date')?.value||ASSIGN[i].date,
+    date2: document.getElementById('f-date2')?.value||'',
+    te: document.getElementById('f-te')?.value||'',
+    reporter: document.getElementById('f-rep')?.value||'',
+    equip_rem: document.getElementById('f-eq')?.value||'',
+    detail: document.getElementById('f-detail')?.value||'',
+  });
+  saveAS();
+  toast('บันทึกการแก้ไขหมาย '+id+' แล้ว');
+  goPage('dash');
+}
+
+function submitCreate(rid) {
+  const title = document.getElementById('f-title')?.value?.trim();
+  const loc   = document.getElementById('f-loc')?.value?.trim();
+  const catSel = document.getElementById('f-cat')?.value;
+  const cat   = catSel === 'ระบุ' ? (document.getElementById('f-cat-custom')?.value?.trim() || 'ระบุ') : catSel;
+  const ts    = document.getElementById('f-ts')?.value;
+  const date  = document.getElementById('f-date')?.value;
+  if (!title||!cat||!loc||!ts) { toast('กรุณากรอกข้อมูลที่จำเป็น (*)', 'err'); return; }
+  const date2 = document.getElementById('f-date2')?.value||'';
+  ASSIGN.push({
+    id: rid, title, cat, loc, date, date2, ts,
+    te: document.getElementById('f-te')?.value||'',
+    reporter: document.getElementById('f-rep')?.value||'',
+    equip_rem: document.getElementById('f-eq')?.value||'',
+    status:'pending', issuer:CU.name, cams:[],
+    detail: document.getElementById('f-detail')?.value||'',
+  });
+  saveAS(); buildNav();
+  toast(`ส่งหมาย ${rid} สำเร็จ!`);
+  goPage('dash');
+}
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: CREW (หัวหน้าช่างภาพ จัดทีม)
+   Architecture: build static HTML shell → inject cam slots via DOM API
+══════════════════════════════════════════════════════════ */
+function pgCrew() {
+  const pending = ASSIGN.filter(a => a.status === 'pending');
+  const w = document.getElementById('pg-wrap');
+  w.innerHTML = `
+  <div class="crew-wrap">
+    <!-- Sidebar: pending list -->
+    <div class="crew-sb">
+      <div style="padding:10px 11px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:600;color:var(--text);">หมายรอจัดทีม</span>
+        <span style="background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:7px;font-family:var(--mono);">${pending.length}</span>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:7px;" id="crew-list">
+        ${pending.length === 0
+          ? `<div style="padding:28px 10px;text-align:center;color:var(--t3);font-size:12px;">ไม่มีหมายรอจัดทีม <i class="fa-solid fa-circle-check" style="color:var(--green);margin-left:3px;"></i></div>`
+          : pending.map((a,i) => `
+            <div onclick="crewSelect('${a.id}')" id="ci-${a.id}"
+              style="padding:10px;border-radius:8px;border:1px solid ${i===0?'var(--acc)':'var(--border)'};background:${i===0?'var(--adim)':'var(--bg)'};cursor:pointer;margin-bottom:4px;transition:all .15s;">
+              <div style="font-size:8px;font-family:var(--mono);color:var(--t3);margin-bottom:1px;">${a.id}</div>
+              <div style="font-size:11.5px;font-weight:600;color:${i===0?'var(--text)':'var(--t2)'};margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${a.title}</div>
+              <div style="font-size:9px;color:var(--t3);"><i class="fa-regular fa-calendar" style="margin-right:3px;"></i>${a.date} ${a.ts}</div>
+            </div>`).join('')}
+      </div>
+    </div>
+    <!-- Main workspace -->
+    <div class="crew-main" id="crew-ws">
+      ${pending.length > 0 ? crewFormHTML(pending[0]) : '<div style="padding:60px;text-align:center;color:var(--t3);">ไม่มีหมายรอจัดทีม</div>'}
+    </div>
+  </div>`;
+  if (pending.length > 0) crewInitSlots();
+}
+
+function crewSelect(id) {
+  document.querySelectorAll('[id^="ci-"]').forEach(el => { el.style.borderColor='var(--border)'; el.style.background='var(--bg)'; });
+  const el = document.getElementById('ci-'+id);
+  if (el) { el.style.borderColor='var(--acc)'; el.style.background='var(--adim)'; }
+  const a = ASSIGN.find(x => x.id===id); if (!a) return;
+  document.getElementById('crew-ws').innerHTML = crewFormHTML(a);
+  crewInitSlots();
+}
+
+function crewFormHTML(a) {
+  const mapEmbed = a.loc ? `
+    <div style="border-radius:7px;overflow:hidden;border:1px solid var(--border);height:150px;position:relative;margin-top:7px;">
+      <iframe src="https://maps.google.com/maps?q=${encodeURIComponent(a.loc)}&t=&z=14&ie=UTF8&iwloc=&output=embed"
+        style="width:100%;height:100%;border:none;" allowfullscreen loading="lazy"></iframe>
+      <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.loc)}" target="_blank"
+        style="position:absolute;bottom:7px;right:7px;background:rgba(0,0,0,.72);color:#60a5fa;font-size:10px;padding:2px 8px;border-radius:5px;text-decoration:none;">
+        <i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:2px;font-size:9px;"></i>เปิดแผนที่
+      </a>
+    </div>` : '';
+  const vhcOpts = EQUIP.filter(e=>e.t==='vehicle').map(e =>
+    `<option ${e.s!=='available'?'disabled':''} value="${e.c}">${e.n}${e.s==='maintenance'?' (ส่งซ่อม)':e.s==='in_use'?' (ถูกเบิก)':''}</option>`
+  ).join('');
+  return `
+  <div style="max-width:720px;margin:0 auto;" class="fu" id="crew-form" data-id="${a.id}">
+    <!-- Assignment info card -->
+    <div class="card" style="padding:14px;margin-bottom:11px;">
+      <div style="font-family:var(--mono);font-size:8.5px;color:var(--t3);margin-bottom:2px;">${a.id}</div>
+      <div style="font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:8px;">${a.title}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:11.5px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:7px;">
+        <div><span style="color:var(--t3);display:block;font-size:9.5px;margin-bottom:1px;">วันเวลา</span>${a.date} ${a.ts}${a.te?'–'+a.te:''}</div>
+        <div><span style="color:var(--t3);display:block;font-size:9.5px;margin-bottom:1px;">สถานที่</span>${a.loc}</div>
+        ${a.equip_rem?`<div style="grid-column:1/-1;"><span style="color:var(--t3);display:block;font-size:9.5px;margin-bottom:1px;">รีมาร์กอุปกรณ์</span><span style="color:var(--acc);">${a.equip_rem}</span></div>`:''}
+      </div>
+      ${mapEmbed}
+    </div>
+    <!-- Cam slots -->
+    <div class="card" style="padding:15px;margin-bottom:11px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:12px;font-weight:700;color:var(--text);">
+          <i class="fa-solid fa-users" style="color:var(--acc);margin-right:7px;"></i>จัดทีมช่างภาพ
+        </span>
+        <button onclick="crewAddSlot()" class="btn bg bsm"><i class="fa-solid fa-plus"></i> เพิ่มช่างภาพ</button>
+      </div>
+      <div id="cam-slots" style="display:flex;flex-direction:column;gap:9px;"></div>
+    </div>
+    <!-- Vehicle -->
+    <div class="card" style="padding:15px;margin-bottom:11px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;">
+        <i class="fa-solid fa-car" style="color:var(--acc);margin-right:7px;"></i>รถข่าว
+      </div>
+      <select id="cr-vhc" class="inp">
+        <option value="">-- ไม่ใช้รถข่าว --</option>${vhcOpts}
+      </select>
+    </div>
+    <!-- Actions -->
+    <div style="display:flex;justify-content:flex-end;gap:7px;padding-bottom:18px;">
+      <button onclick="goPage('crew')" class="btn bg">ยกเลิก</button>
+      <button onclick="crewConfirm()" class="btn bgreen"><i class="fa-solid fa-check-double"></i> ยืนยันจัดทีม & ตัดสต๊อก</button>
+    </div>
+  </div>`;
+}
+
+// ─── Slot count (module-level, reset each time crewInitSlots is called)
+let _sc = 0;
+
+function crewInitSlots() {
+  _sc = 0;
+  const c = document.getElementById('cam-slots');
+  if (!c) return;
+  c.innerHTML = '';
+  crewAddSlot();
+}
+
+function crewAddSlot() {
+  const c = document.getElementById('cam-slots'); if (!c) return;
+  if (_sc >= 6) { toast('สูงสุด 6 คนต่อหมาย', 'warn'); return; }
+  const idx = _sc++;
+
+  const EQ_TYPES = [
+    {lb:'กล้อง', t:'camera'}, {lb:'LiveU', t:'liveu'}, {lb:'ไมค์', t:'mic'},
+    {lb:'ขาตั้ง', t:'tripod'}, {lb:'ไฟ LED', t:'light'}, {lb:'โดรน', t:'drone'},
+  ];
+
+  // Build slot element entirely via DOM (no innerHTML with template strings)
+  const wrap = document.createElement('div');
+  wrap.className = 'cardsm';
+  wrap.id = 'cs-' + idx;
+  wrap.style.cssText = 'padding:12px;';
+
+  // ── Header row ─────────────────────────────────
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;gap:7px;margin-bottom:9px;';
+
+  const lbl = document.createElement('div');
+  lbl.style.cssText = 'font-size:9px;color:var(--t3);font-family:var(--mono);background:var(--bg);padding:2px 6px;border-radius:4px;border:1px solid var(--border);flex-shrink:0;';
+  lbl.textContent = 'ช่างภาพ ' + (idx+1);
+
+  const camSel = document.createElement('select');
+  camSel.className = 'inp';
+  camSel.id = 'cs-cam-' + idx;
+  camSel.style.cssText = 'flex:1;font-size:11.5px;padding:6px 9px;';
+
+  const ph = new Option('-- เลือกจาก '+CAMERAMEN.length+' คน --','');
+  ph.disabled = true; ph.selected = true;
+  camSel.appendChild(ph);
+  const gS = document.createElement('optgroup'); gS.label = 'Senior';
+  CAMERAMEN.filter(c=>c.r==='Senior').forEach(c=>{ gS.appendChild(new Option(c.n,c.n)); });
+  const gA = document.createElement('optgroup'); gA.label = 'Associate';
+  CAMERAMEN.filter(c=>c.r==='Associate').forEach(c=>{ gA.appendChild(new Option(c.n,c.n)); });
+  camSel.appendChild(gS); camSel.appendChild(gA);
+
+  hdr.appendChild(lbl); hdr.appendChild(camSel);
+
+  if (idx > 0) {
+    const rmBtn = document.createElement('button');
+    rmBtn.className = 'bic';
+    rmBtn.style.cssText = 'color:var(--red);border-color:rgba(239,68,68,.18);flex-shrink:0;';
+    rmBtn.title = 'ลบ';
+    rmBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    rmBtn.onclick = () => wrap.remove();
+    hdr.appendChild(rmBtn);
+  }
+
+  // ── Drive radio ────────────────────────────────
+  const driveRow = document.createElement('div');
+  driveRow.style.cssText = 'display:flex;gap:7px;flex-wrap:wrap;margin-bottom:9px;';
+  [['self','ขับเอง','+150฿','#4ade80'],['none','ไม่ขับ','','']].forEach(([val,txt,badge,bc], ri) => {
+    const lbl2 = document.createElement('label');
+    lbl2.style.cssText = 'display:flex;align-items:center;gap:5px;font-size:12px;color:var(--t2);cursor:pointer;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);';
+    const radio = document.createElement('input');
+    radio.type = 'radio'; radio.name = 'dr-' + idx; radio.value = val; radio.style.margin = '0';
+    if (ri === 1) radio.checked = true;
+    lbl2.appendChild(radio);
+    lbl2.appendChild(document.createTextNode(' ' + txt));
+    if (badge) {
+      const sp = document.createElement('span');
+      sp.style.cssText = `font-size:9.5px;color:${bc};font-family:var(--mono);`;
+      sp.textContent = badge;
+      lbl2.appendChild(sp);
+    }
+    driveRow.appendChild(lbl2);
+  });
+
+  // ── Equipment picker (flexible chip style) ────
+  const eqSection = document.createElement('div');
+  eqSection.style.cssText = 'border-top:1px solid var(--border);padding-top:9px;margin-top:2px;';
+
+  const eqLbl = document.createElement('div');
+  eqLbl.style.cssText = 'font-size:9.5px;color:var(--t3);margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;';
+  eqLbl.innerHTML = '<span>อุปกรณ์ที่ใช้ <span style="opacity:.6;">(ไม่บังคับ — เลือกหรือพิมพ์เพิ่มได้เสรี)</span></span>';
+
+  // Chip container
+  const chipWrap = document.createElement('div');
+  chipWrap.id = 'cs-chips-' + idx;
+  chipWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;min-height:24px;';
+
+  // Quick-pick buttons from available EQUIP
+  const quickRow = document.createElement('div');
+  quickRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px;';
+
+  // Build quick-pick from all EQ_META types (except vehicle)
+  const EQ_TYPES_QPK = Object.entries(EQ_META)
+    .filter(([k]) => k !== 'vehicle')
+    .map(([k,m]) => ({t:k, lb:m.lb}));
+
+  EQ_TYPES_QPK.forEach(row => {
+    const avail = EQUIP.filter(e=>e.t===row.t&&e.s==='available');
+    if (!avail.length) return;
+    // group button for the type
+    const grpBtn = document.createElement('button');
+    grpBtn.type = 'button';
+    grpBtn.textContent = '+ ' + row.lb;
+    grpBtn.style.cssText = 'padding:3px 9px;font-size:10.5px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--t2);cursor:pointer;font-family:var(--sans);transition:all .15s;';
+    grpBtn.onmouseover = () => { grpBtn.style.borderColor='var(--acc)'; grpBtn.style.color='var(--acc)'; };
+    grpBtn.onmouseout  = () => { grpBtn.style.borderColor='var(--border)'; grpBtn.style.color='var(--t2)'; };
+    grpBtn.onclick = () => eqShowPicker(idx, row.t, row.lb, grpBtn);
+    quickRow.appendChild(grpBtn);
+  });
+
+  // Free-text input
+  const freeInput = document.createElement('input');
+  freeInput.type = 'text';
+  freeInput.className = 'inp';
+  freeInput.id = 'cs-eq-free-' + idx;
+  freeInput.placeholder = 'พิมพ์รหัส/ชื่ออุปกรณ์ แล้วกด Enter เพื่อเพิ่ม';
+  freeInput.style.cssText = 'font-size:11px;padding:5px 9px;';
+  freeInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = freeInput.value.trim();
+      if (val) { addEqChip(idx, val, val); freeInput.value = ''; }
+    }
+  });
+
+  eqSection.appendChild(eqLbl);
+  eqSection.appendChild(chipWrap);
+  eqSection.appendChild(quickRow);
+  eqSection.appendChild(freeInput);
+
+  wrap.appendChild(hdr);
+  wrap.appendChild(driveRow);
+  wrap.appendChild(eqSection);
+  c.appendChild(wrap);
+}
+
+function addEqChip(idx, code, label) {
+  const wrap = document.getElementById('cs-chips-' + idx); if (!wrap) return;
+  // prevent duplicate
+  if (Array.from(wrap.querySelectorAll('.eq-chip')).some(c=>c.dataset.code===code)) return;
+  const chip = document.createElement('div');
+  chip.className = 'eq-chip';
+  chip.dataset.code = code;
+  chip.style.cssText = 'display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:20px;background:var(--adim);border:1px solid var(--aglow);font-size:11px;color:var(--acc);';
+  chip.innerHTML = `<span>${label}</span><button type="button" onclick="this.closest('.eq-chip').remove()" style="background:none;border:none;color:var(--acc);cursor:pointer;font-size:11px;padding:0;line-height:1;opacity:.7;">&times;</button>`;
+  wrap.appendChild(chip);
+}
+
+function eqShowPicker(slotIdx, type, typeLbl, anchorBtn) {
+  // toggle: close if already open
+  const pickerId = 'eq-picker-' + slotIdx + '-' + type;
+  const existing = document.getElementById(pickerId);
+  if (existing) { existing.remove(); return; }
+
+  const avail = EQUIP.filter(e => e.t === type);
+  const picker = document.createElement('div');
+  picker.id = pickerId;
+  picker.style.cssText = 'position:absolute;z-index:60;background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px;min-width:210px;box-shadow:0 8px 24px rgba(0,0,0,.5);margin-top:4px;';
+
+  // Header
+  const hd = document.createElement('div');
+  hd.style.cssText = 'font-size:9.5px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.07em;';
+  hd.textContent = typeLbl;
+  picker.appendChild(hd);
+
+  if (avail.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'color:var(--t3);font-size:11px;padding:4px 0 2px;';
+    empty.textContent = 'ไม่มีอุปกรณ์ประเภทนี้';
+    picker.appendChild(empty);
+  } else {
+    avail.forEach(e => {
+      const row = document.createElement('div');
+      const isDisabled = e.s !== 'available';
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:7px 8px;border-radius:6px;font-size:11.5px;transition:background .12s;' + (isDisabled ? 'opacity:.38;' : 'cursor:pointer;');
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.style.color = isDisabled ? 'var(--t3)' : 'var(--text)';
+      nameSpan.textContent = e.n;
+
+      const codeSpan = document.createElement('span');
+      codeSpan.style.cssText = 'font-family:var(--mono);font-size:9.5px;color:var(--t3);margin-left:8px;flex-shrink:0;';
+      codeSpan.textContent = e.c + (isDisabled ? ' (ไม่ว่าง)' : '');
+
+      row.appendChild(nameSpan);
+      row.appendChild(codeSpan);
+
+      if (!isDisabled) {
+        row.addEventListener('mouseenter', () => row.style.background = 'var(--bg)');
+        row.addEventListener('mouseleave', () => row.style.background = 'transparent');
+        row.addEventListener('click', () => {
+          addEqChip(slotIdx, e.c, e.c + ' ' + e.n);
+          picker.remove();
+        });
+      }
+      picker.appendChild(row);
+    });
+  }
+
+  // Position relative to anchor's parent
+  anchorBtn.parentNode.style.position = 'relative';
+  anchorBtn.parentNode.appendChild(picker);
+
+  // Close on outside click
+  setTimeout(() => {
+    const closer = ev => {
+      if (!picker.contains(ev.target) && ev.target !== anchorBtn) {
+        picker.remove();
+        document.removeEventListener('click', closer);
+      }
+    };
+    document.addEventListener('click', closer);
+  }, 10);
+}
+
+function crewConfirm() {
+  // ── 1. หา assign ID จาก crew-form ──
+  const form = document.getElementById('crew-form');
+  if (!form) { toast('ไม่พบฟอร์ม — กรุณาเลือกหมายใหม่', 'err'); return; }
+  const assignId = form.getAttribute('data-id');
+  if (!assignId) { toast('ไม่พบรหัสหมาย', 'err'); return; }
+
+  // ── 2. อ่านทุก slot จาก cam-slots container ──
+  const slotsContainer = document.getElementById('cam-slots');
+  if (!slotsContainer) { toast('ไม่พบส่วนจัดทีม', 'err'); return; }
+
+  const cams = [];
+  // วน loop ทุก slot wrapper ที่มี id ขึ้นต้น cs-
+  const slotEls = slotsContainer.querySelectorAll('[id^="cs-"]');
+  slotEls.forEach(slot => {
+    const idx = slot.id.replace('cs-', '');
+    // หา select ช่างภาพใน slot นั้น
+    const camSel = slot.querySelector('select[id="cs-cam-' + idx + '"]');
+    if (!camSel || !camSel.value) return; // ข้าม slot ที่ยังไม่เลือกช่างภาพ
+
+    // อ่านค่า drive จาก radio ใน slot นั้น
+    const driveRadio = slot.querySelector('input[type="radio"][name="dr-' + idx + '"]:checked');
+    const drive = driveRadio ? driveRadio.value === 'self' : false;
+
+    // อ่าน chips อุปกรณ์
+    const chipContainer = slot.querySelector('[id="cs-chips-' + idx + '"]');
+    const equipList = chipContainer
+      ? Array.from(chipContainer.querySelectorAll('.eq-chip')).map(ch => ch.dataset.code).filter(Boolean)
+      : [];
+
+    cams.push({ name: camSel.value, drive, equipList });
+  });
+
+  if (cams.length === 0) {
+    toast('กรุณาเลือกช่างภาพอย่างน้อย 1 คน', 'err');
+    return;
+  }
+  // Conflict detection: ช่างภาพคนนี้มีหมายซ้อนทับเวลากันหรือไม่
+  const targetA = ASSIGN.find(a=>a.id===assignId);
+  if (targetA) {
+    const conflicts = [];
+    cams.forEach(c => {
+      const busy = ASSIGN.filter(a =>
+        a.id !== assignId &&
+        a.status === 'assigned' &&
+        a.date === targetA.date &&
+        (a.cams||[]).some(x=>x.name===c.name)
+      );
+      if (busy.length) conflicts.push(c.name + ' (มีหมาย: ' + busy.map(b=>b.ts+' '+b.title.slice(0,15)).join(', ') + ')');
+    });
+    if (conflicts.length) {
+      const ok = confirm(`พบการซ้อนทับ: ` + conflicts.join(', ') + ` -- ยืนยันจัดทีมต่อ?`);
+      if (!ok) return;
+    }
+  }
+
+  // ── 3. อ่านรถข่าว ──
+  const vhcCode = document.getElementById('cr-vhc')?.value || '';
+  const vhcObj  = vhcCode ? EQUIP.find(e => e.c === vhcCode) : null;
+  const vhcName = vhcObj ? vhcObj.n : vhcCode;
+
+  // ── 4. บันทึกลง ASSIGN ──
+  const i = ASSIGN.findIndex(a => a.id === assignId);
+  if (i < 0) { toast('ไม่พบหมายข่าวในระบบ', 'err'); return; }
+  ASSIGN[i].cams   = cams;
+  ASSIGN[i].cam    = cams[0].name;
+  ASSIGN[i].drive  = cams.some(c => c.drive);
+  ASSIGN[i].status = 'assigned';
+  if (vhcName) ASSIGN[i].vhc = vhcName;
+  saveAS();
+
+  // ── 5. lock อุปกรณ์และรถ ──
+  cams.forEach(c => {
+    (c.equipList || []).forEach(code => {
+      const ei = EQUIP.findIndex(e => e.c === code);
+      if (ei >= 0) EQUIP[ei].s = 'in_use';
+    });
+  });
+  if (vhcCode) {
+    const vi = EQUIP.findIndex(e => e.c === vhcCode);
+    if (vi >= 0) EQUIP[vi].s = 'in_use';
+  }
+  saveEQ();
+
+  // ── 6. แจ้งผลและ refresh ──
+  const dc = cams.filter(c => c.drive).length;
+  const names = cams.map(c => c.name).join(', ');
+  toast('จัดทีมสำเร็จ! ' + names + (dc ? ' · ขับ ' + dc + ' คน (+' + dc*150 + '฿/วัน)' : ''));
+  buildNav();
+  goPage('crew');
+}
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: RATING
+══════════════════════════════════════════════════════════ */
+function pgRating() {
+  const isEd = CU.role === 'editor';
+  const w = document.getElementById('pg-wrap');
+  if (isEd) {
+    w.innerHTML = `
+    <div class="pg fu">
+      <div style="max-width:900px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 11px;border-radius:8px;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.13);font-size:11.5px;color:#60a5fa;margin-bottom:16px;">
+          <i class="fa-solid fa-circle-info" style="font-size:10px;flex-shrink:0;"></i>
+          คุณเห็นและประเมินได้เฉพาะหมายที่คุณออกเองเท่านั้น
+        </div>
+        <div id="rt-wrap"></div>
+      </div>
+    </div>`;
+    rtRenderTable('editor');
+    return;
+  }
+  // Admin: full sidebar with all views
+  w.innerHTML = `
+  <div style="display:flex;flex:1;overflow:hidden;">
+    <div style="width:200px;flex-shrink:0;border-right:1px solid var(--border);background:var(--surf);display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:10px 11px;border-bottom:1px solid var(--border);"><span style="font-size:12px;font-weight:600;color:var(--text);">สรุปผล</span></div>
+      <div style="flex:1;overflow-y:auto;padding:7px;">
+        <button onclick="rtView('score',this)" id="rtv-score" class="nb on" style="margin-bottom:1px;"><i class="fa-solid fa-star-half-stroke"></i>คะแนน & ความเห็น</button>
+        <button onclick="rtView('table',this)" id="rtv-table" class="nb" style="margin-bottom:1px;"><i class="fa-solid fa-table-list"></i>ตารางหมาย</button>
+        <button onclick="rtView('rank',this)"  id="rtv-rank"  class="nb" style="margin-bottom:1px;"><i class="fa-solid fa-ranking-star"></i>Performance</button>
+        <button onclick="rtView('ind',this)"   id="rtv-ind"   class="nb" style="margin-bottom:1px;"><i class="fa-solid fa-user-check"></i>รายคน + Trend</button>
+        <button onclick="rtView('calib',this)" id="rtv-calib" class="nb" style="margin-bottom:1px;"><i class="fa-solid fa-scale-balanced"></i>Calibration</button>
+        <div style="height:1px;background:var(--border);margin:8px 0;"></div>
+        <button onclick="downloadRatingCSV()" class="nb" style="color:var(--green);"><i class="fa-solid fa-download"></i>ดาวน์โหลด CSV</button>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:20px;" id="rt-wrap"></div>
+  </div>`;
+  rtView('score', document.getElementById('rtv-score'));
+}
+
+function rtView(v, btn) {
+  ['score','table','rank','ind','calib'].forEach(x => {
+    const b = document.getElementById('rtv-'+x); if (b) b.classList.toggle('on', x===v);
+  });
+  const ws = document.getElementById('rt-wrap'); if (!ws) return;
+  if      (v==='score') rtRenderScore();
+  else if (v==='table') rtRenderTable('admin');
+  else if (v==='rank')  rtRenderRank();
+  else if (v==='calib') rtRenderCalib();
+  else                  rtRenderInd();
+}
+
+// ── helper: filter ASSIGN by period ──────────────────────────
+function rtRenderCalib() {
+  const ws = document.getElementById('rt-wrap'); if (!ws) return;
+  const cal = calcCalibration(ASSIGN);
+  const { results, teamAvg } = cal;
+  const BIAS_THRESH = 1.5; // ห่างจาก team avg เกิน 1.5 = bias
+  ws.innerHTML = `
+  <div class="fi">
+    <div style="margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:700;color:var(--text);">Calibration — ความสม่ำเสมอของผู้ประเมิน</div>
+      <div style="font-size:10.5px;color:var(--t3);margin-top:2px;">ตรวจสอบว่าบรรณาธิการแต่ละคนให้คะแนนสูงหรือต่ำเกินไปเมื่อเทียบกับทีม</div>
+    </div>
+    <div class="g3" style="margin-bottom:16px;">
+      <div class="stat">
+        <div style="font-size:9.5px;color:var(--t3);margin-bottom:3px;">ค่าเฉลี่ยทีม</div>
+        <div style="font-size:22px;font-weight:800;color:var(--text);">${teamAvg}/10</div>
+      </div>
+      <div class="stat">
+        <div style="font-size:9.5px;color:var(--t3);margin-bottom:3px;">ผู้ประเมิน</div>
+        <div style="font-size:22px;font-weight:800;color:var(--text);">${results.length} คน</div>
+      </div>
+      <div class="stat">
+        <div style="font-size:9.5px;color:var(--t3);margin-bottom:3px;">มี Bias</div>
+        <div style="font-size:22px;font-weight:800;color:${results.filter(r=>Math.abs(r.avg-teamAvg)>=BIAS_THRESH).length>0?'#f87171':'#4ade80'};">
+          ${results.filter(r=>Math.abs(r.avg-teamAvg)>=BIAS_THRESH).length} คน
+        </div>
+      </div>
+    </div>
+    ${results.length===0 ? '<div style="text-align:center;padding:40px;color:var(--t3);">ยังไม่มีข้อมูลเพียงพอ (ต้องประเมินอย่างน้อย 3 หมายต่อคน)</div>' : ''}
+    ${results.map(r => {
+      const diff = parseFloat((r.avg-teamAvg).toFixed(1));
+      const hasBias = Math.abs(diff) >= BIAS_THRESH;
+      const diffClr = diff>0?'#f87171':diff<0?'#60a5fa':'#4ade80';
+      const pct = Math.round(r.avg/10*100);
+      const barW = Math.round(r.avg/10*100);
+      return `
+      <div class="card" style="padding:13px 15px;margin-bottom:9px;${hasBias?'border-color:rgba(239,68,68,.4);':''}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;gap:10px;">
+          <div style="flex:1;">
+            <div style="font-size:12.5px;font-weight:700;color:var(--text);">${r.name}</div>
+            <div style="font-size:10px;color:var(--t3);">ประเมิน ${r.count} หมาย</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:18px;font-weight:800;color:${r.avg>=8?'#4ade80':r.avg>=6?'#facc15':'#fb923c'};">${r.avg}<span style="font-size:10px;color:var(--t3);">/10</span></div>
+            ${hasBias ? `<div style="font-size:9.5px;color:${diffClr};font-weight:600;">${diff>0?'สูง':'ต่ำ'}กว่าทีม ${Math.abs(diff)} คะแนน</div>` : `<div style="font-size:9.5px;color:#4ade80;">ปกติ ✓</div>`}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="font-size:9.5px;color:var(--t3);width:30px;">0</div>
+          <div style="flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--border);position:relative;">
+            <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border);"></div>
+            <div style="height:100%;width:${barW}%;background:${hasBias?diffClr:'#4ade80'};border-radius:4px;"></div>
+          </div>
+          <div style="font-size:9.5px;color:var(--t3);width:20px;">10</div>
+        </div>
+        ${hasBias ? `<div style="margin-top:8px;padding:6px 9px;border-radius:6px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.18);font-size:10.5px;color:#fca5a5;">
+          <i class="fa-solid fa-triangle-exclamation" style="margin-right:5px;font-size:9px;"></i>
+          ${diff>0?'ให้คะแนนสูงกว่าค่าเฉลี่ยทีมมาก อาจทำให้ช่างภาพที่ถูกประเมินโดยคนอื่นเสียเปรียบ':'ให้คะแนนต่ำกว่าค่าเฉลี่ยทีมมาก ช่างภาพที่ถูกประเมินโดยผู้นี้อาจได้คะแนนต่ำกว่าความเป็นจริง'}
+        </div>` : ''}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function rtFilterByPeriod(period, ref) {
+  // ref = 'YYYY-MM-DD' or 'YYYY-MM' or 'YYYY'
+  let list = [...ASSIGN].filter(a => a.rating !== undefined && a.rated_cam !== undefined);
+  if (period === 'day')   list = list.filter(a => a.date === ref);
+  else if (period === 'month') list = list.filter(a => a.date.slice(0,7) === ref);
+  else if (period === 'year')  list = list.filter(a => a.date.slice(0,4) === ref);
+  return list;
+}
+
+// ── SCORE VIEW: คะแนน & ความเห็น รายวัน/เดือน/ปี รายคนและรวม ──
+function rtRenderScore() {
+  const ws = document.getElementById('rt-wrap'); if (!ws) return;
+  const td = today();
+  ws.innerHTML = `
+  <div class="fi">
+    <!-- Filter bar (date = from sidebar calendar) -->
+    <div class="card" style="padding:10px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t3);">
+        <i class="fa-solid fa-calendar-days" style="color:var(--acc);font-size:10px;"></i>
+        <span id="score-gd-lbl"></span>
+      </div>
+      <select id="sc-cam" class="inp" style="width:auto;font-size:11.5px;padding:5px 9px;margin-left:auto;" onchange="scoreRender()">
+        <option value="">ช่างภาพทุกคน (ภาพรวม)</option>
+        ${CAMERAMEN.map(c=>`<option value="${c.n}">${c.n}</option>`).join('')}
+      </select>
+    </div>
+    <!-- Summary stats -->
+    <div id="sc-stats" class="g4" style="margin-bottom:16px;"></div>
+    <!-- Score cards -->
+    <div id="sc-cards"></div>
+  </div>`;
+  window._scoreSeg = 'day';
+  scoreRender();
+}
+
+function scoreSegChange(seg, btn) {
+  window._scoreSeg = seg;
+  btn.closest('.seg').querySelectorAll('.sb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  // show/hide date inputs
+  document.getElementById('sc-date') .style.display = seg==='day'   ? '' : 'none';
+  document.getElementById('sc-month').style.display = seg==='month' ? '' : 'none';
+  document.getElementById('sc-year') .style.display = seg==='year'  ? '' : 'none';
+  scoreRender();
+}
+
+function scoreRender() {
+  const cam  = document.getElementById('sc-cam')?.value || '';
+  const MODE_LBL2 = {day:'วันที่ '+GD.date, month:'เดือน '+GD.month, year:'ปี '+(parseInt(GD.year)+543), all:'ทั้งหมด', range: GD.rangeFrom&&GD.rangeTo?GD.rangeFrom+' ถึง '+GD.rangeTo:'—'};
+  const lbl2 = document.getElementById('score-gd-lbl');
+  if (lbl2) lbl2.textContent = MODE_LBL2[GD.mode]||'';
+
+  let list = gdFilter([...ASSIGN]).filter(a => a.rating !== undefined && a.rated_cam !== undefined);
+  if (cam) list = list.filter(a => (a.cams||[]).some(c=>c.name===cam) || a.cam===cam);
+  list.sort((a,b) => b.date.localeCompare(a.date));
+
+  // Summary stats
+  const avg = list.length ? (list.reduce((s,a)=>s+a.rating,0)/list.length).toFixed(2) : '—';
+  const dist = [1,2,3,4,5].map(v => list.filter(a=>a.rating===v).length);
+
+  const statsEl = document.getElementById('sc-stats');
+  if (statsEl) statsEl.innerHTML = [
+    {l:'รายการประเมิน',  v:list.length,           c:'var(--text)'},
+    {l:'คะแนนเฉลี่ย',   v:avg === '—' ? '—' : '★ '+avg, c:'#f5c518'},
+    {l:'ยอดเยี่ยม (5★)', v:dist[4],              c:'#4ade80'},
+    {l:'ต้องปรับปรุง (1-2★)', v:dist[0]+dist[1], c:'#f87171'},
+  ].map(s=>`<div class="stat"><div style="font-size:9.5px;color:var(--t3);margin-bottom:3px;">${s.l}</div><div style="font-size:${s.v===0||s.v==='—'?'22':'22'}px;font-weight:800;color:${s.c};">${s.v}</div></div>`).join('');
+
+  const cardsEl = document.getElementById('sc-cards');
+  if (!cardsEl) return;
+  if (!list.length) {
+    cardsEl.innerHTML = `<div style="text-align:center;padding:50px;color:var(--t3);"><i class="fa-solid fa-star-half-stroke" style="font-size:30px;opacity:.3;display:block;margin-bottom:9px;"></i>ไม่มีข้อมูลการประเมินในช่วงนี้</div>`;
+    return;
+  }
+
+  // Star distribution bar
+  const maxDist = Math.max(...dist, 1);
+  const STAR_LBL = ['ต้องปรับปรุง','พอใช้','ปานกลาง','ดี','ยอดเยี่ยม'];
+  const STAR_CLR = ['#f87171','#fb923c','#facc15','#86efac','#4ade80'];
+  let distHtml = `<div class="card" style="padding:14px 16px;margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:11px;">การกระจายคะแนน</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+    ${[5,4,3,2,1].map(v => {
+      const cnt = dist[v-1]; const pct = Math.round(cnt/maxDist*100);
+      return `<div style="display:flex;align-items:center;gap:8px;">
+        <div style="font-size:10.5px;color:${STAR_CLR[v-1]};font-family:var(--mono);font-weight:700;width:18px;text-align:right;">${v}★</div>
+        <div style="flex:1;height:16px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--border);">
+          <div style="height:100%;width:${pct}%;background:${STAR_CLR[v-1]};border-radius:4px;transition:width .5s;min-width:${cnt>0?4:0}px;"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--t2);width:24px;text-align:right;">${cnt}</div>
+        <div style="font-size:9.5px;color:var(--t3);width:80px;">${STAR_LBL[v-1]}</div>
+      </div>`;
+    }).join('')}
+    </div>
+  </div>`;
+
+  // Rating cards
+  let cardsHtml = list.map(a => {
+    const camNames = (a.cams||[]).map(c=>c.name).join(', ') || a.cam || '—';
+    const STAR_C = ['','#f87171','#fb923c','#facc15','#86efac','#4ade80'][a.rating];
+    return `<div class="card" style="padding:14px 16px;margin-bottom:10px;border-left:3px solid ${STAR_C};">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:var(--mono);font-size:8.5px;color:var(--t3);margin-bottom:1px;">${a.date} · ${a.id}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.35;">${a.title}</div>
+          <div style="font-size:11px;color:var(--t2);margin-top:2px;"><i class="fa-solid fa-camera" style="margin-right:4px;opacity:.5;"></i>${camNames}</div>
+        </div>
+        <div style="text-align:center;flex-shrink:0;">
+          <div style="font-size:22px;font-weight:800;color:${STAR_C};">${a.rating}</div>
+          <div style="font-size:11px;color:#f5c518;">${'★'.repeat(a.rating)}<span style="color:var(--t4);">${'★'.repeat(5-a.rating)}</span></div>
+          <div style="font-size:9px;color:var(--t3);margin-top:1px;">${STAR_LBL[a.rating-1]}</div>
+        </div>
+      </div>
+      ${a.scores ? `<div style="display:flex;gap:5px;margin-bottom:7px;flex-wrap:wrap;">${Object.entries(a.scores).map(([k,v])=>{
+        const cr=CRITERIA.find(c=>c.id===k); if(!cr) return '';
+        const clr=v===2?'#4ade80':v===1?'#facc15':'#f87171';
+        const lbl=v===2?'ดี':v===1?'พอใช้':'ต้องปรับ';
+        return `<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:${clr}18;border:1px solid ${clr}44;color:${clr};">${cr.lb}: ${lbl}</span>`;
+      }).join('')}</div>` : ''}
+      ${a.r_comment ? `<div style="padding:8px 11px;background:var(--bg);border:1px solid var(--border);border-radius:7px;font-size:12px;color:var(--t2);line-height:1.55;">
+        <i class="fa-solid fa-comment-dots" style="color:var(--t3);margin-right:6px;font-size:10px;"></i>${a.r_comment}
+      </div>` : `<div style="font-size:11px;color:var(--t4);font-style:italic;">ไม่มีความเห็น</div>`}
+      <div style="margin-top:7px;display:flex;gap:8px;font-size:10.5px;color:var(--t3);">
+        <span><i class="fa-solid fa-location-dot" style="color:var(--acc);margin-right:3px;opacity:.7;"></i>${a.loc||'—'}</span>
+        <span style="margin-left:auto;">ออกโดย ${a.issuer||'—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  cardsEl.innerHTML = distHtml + cardsHtml;
+}
+
+function rtRenderTable(role) {
+  const period = document.getElementById('rt-period')?.value || 'all';
+  const dateVal= document.getElementById('rt-date')?.value || '';
+  let list = role==='editor' ? ASSIGN.filter(a=>a.issuer===CU.name) : [...ASSIGN];
+  if (period==='today') list = list.filter(a=>a.date===today());
+  else if (period==='week') {
+    const n=new Date(),d=n.getDay(),mon=new Date(n);mon.setDate(n.getDate()-(d===0?6:d-1));
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    list=list.filter(a=>{const dt=new Date(a.date+'T00:00:00');return dt>=mon&&dt<=sun;});
+  } else if (period==='month') {
+    const ym=(dateVal||today()).slice(0,7);
+    list=list.filter(a=>a.date.slice(0,7)===ym);
+  }
+  list.sort((a,b)=>b.date.localeCompare(a.date));
+  const stats = {
+    all:ASSIGN.length, mine:ASSIGN.filter(a=>a.issuer===CU.name).length,
+    pend_rate:ASSIGN.filter(a=>a.status==='done').length,
+    rated:ASSIGN.filter(a=>a.status==='rated').length,
+  };
+  const ws = document.getElementById('rt-wrap'); if (!ws) return;
+  ws.innerHTML = `
+  <div class="fi">
+    <div class="g4" style="margin-bottom:16px;">
+      ${role==='admin'?[
+        {l:'หมายทั้งหมด',v:stats.all,c:'var(--text)'},{l:'ออกโดยฉัน',v:stats.mine,c:'var(--acc)'},
+        {l:'รอประเมิน',v:stats.pend_rate,c:'#facc15'},{l:'ประเมินแล้ว',v:stats.rated,c:'#4ade80'},
+      ].map(s=>`<div class="stat"><div style="font-size:9.5px;color:var(--t3);margin-bottom:3px;">${s.l}</div><div style="font-size:22px;font-weight:800;color:${s.c};">${s.v}</div></div>`).join(''):''}
+    </div>
+    <div style="display:flex;gap:7px;margin-bottom:11px;flex-wrap:wrap;">
+      <select id="rt-period" onchange="rtRenderTable('${role}')" class="inp" style="width:auto;font-size:11.5px;padding:5px 9px;">
+        <option value="all">ทั้งหมด</option><option value="today">วันนี้</option>
+        <option value="week">สัปดาห์นี้</option><option value="month">เดือนนี้</option>
+      </select>
+      <input type="date" id="rt-date" class="inp" style="width:auto;font-size:11.5px;padding:5px 9px;" value="${today()}" onchange="rtRenderTable('${role}')">
+    </div>
+    <div class="card" style="overflow:hidden;">
+      <table class="tbl">
+        <thead><tr><th>วันที่</th><th>หมายข่าว</th><th>ผู้ออกหมาย</th><th>ช่างภาพ</th><th>คะแนน</th><th>สถานะ</th></tr></thead>
+        <tbody>
+          ${list.map(a => {
+            const stH = a.rating !== undefined && a.rated_cam !== undefined
+              ? `<div style="font-size:13px;font-weight:800;color:${a.rating>=8?'#4ade80':a.rating>=6?'#facc15':a.rating>=4?'#fb923c':'#f87171'};">${a.rating}<span style="font-size:9px;color:var(--t3);">/10</span></div>
+                 <div style="font-size:9.5px;color:var(--t3);">${a.rating_pct||Math.round(a.rating/10*100)}%</div>`
+              : '<span style="color:var(--t3);">—</span>';
+            const canRate = a.status==='done' && (CU.role==='admin'||(CU.role==='editor'&&a.issuer===CU.name));
+            const statusH = canRate
+              ? `<button onclick="openRating('${a.id}')" class="btn bp bsm"><i class="fa-solid fa-star"></i> ประเมิน</button>`
+              : `<span class="badge ${sm(a.status).cls}">${sm(a.status).lb}</span>`;
+            const camNames = (a.cams||[]).length ? (a.cams||[]).map(c=>c.name).join(', ') : a.cam||'—';
+            return `<tr>
+              <td><div style="font-size:12px;color:var(--text);">${a.date}</div><div style="font-family:var(--mono);font-size:8.5px;color:var(--t3);">${a.id}</div></td>
+              <td style="max-width:200px;"><div style="font-size:12px;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${a.title}</div></td>
+              <td style="font-size:11.5px;color:var(--t2);">${a.issuer}</td>
+              <td style="font-size:11.5px;color:var(--t2);">${camNames}</td>
+              <td>${stH}</td>
+              <td>${statusH}</td>
+            </tr>`;
+          }).join('')}
+          ${!list.length?`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:28px;">ไม่มีข้อมูล</td></tr>`:''}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function rtRenderRank() {
+  const camStats = CAMERAMEN.map(c => {
+    const rated = ASSIGN.filter(a=>a.rating && ((a.cams||[]).some(x=>x.name===c.n)||a.cam===c.n));
+    const all   = ASSIGN.filter(a=>(a.cams||[]).some(x=>x.name===c.n)||a.cam===c.n);
+    const avg   = rated.length ? (rated.reduce((s,a)=>s+(a.rating||0),0)/rated.length) : 0;
+    const totalWU2 = all.reduce((s,a)=>s+(a.job_weight||calcJobWeight(a).wu),0);
+    return {...c, avg, total:all.length, ratedCount:rated.length, totalWU2};
+  }).filter(c=>c.total>0).sort((a,b)=>b.avg-a.avg||b.total-a.total);
+  const TDIR_IC = {up:'fa-arrow-trend-up', down:'fa-arrow-trend-down', flat:'fa-minus'};
+  const TDIR_CLR = {up:'#4ade80', down:'#f87171', flat:'var(--t3)'};
+  document.getElementById('rt-wrap').innerHTML = `
+  <div class="fi">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);">จัดลำดับช่างภาพ — Performance Score</div>
+        <div style="font-size:10.5px;color:var(--t3);margin-top:2px;">คะแนน × ประสิทธิภาพต่อวัน · ต้องมีหมาย ≥5 จึงจะจัดอันดับ</div>
+      </div>
+      <button onclick="rtView('calib',document.getElementById('rtv-calib'))" class="btn bg bsm"><i class="fa-solid fa-scale-balanced"></i> Calibration</button>
+    </div>
+    <div class="card" style="overflow:hidden;">
+      <table class="tbl">
+        <thead><tr><th>#</th><th>ช่างภาพ</th><th>หมาย</th><th>WU/วัน</th><th>คะแนนเฉลี่ย</th><th>Performance Score</th><th>Trend</th></tr></thead>
+        <tbody>
+          ${camStats.map((c,i)=>{
+            const ranked = c.score !== null;
+            const medal = ranked ? (['🥇','🥈','🥉'][i]||`<span style="font-family:var(--mono);font-size:11px;color:var(--t3);">#${i+1}</span>`) : '<span style="font-size:9.5px;color:var(--t3);">—</span>';
+            const sc_clr = c.score>=6?'#4ade80':c.score>=4?'#facc15':c.score>=2?'#fb923c':'#f87171';
+            const avg_clr = c.avg>=8?'#4ade80':c.avg>=6?'#facc15':c.avg>=4?'#fb923c':'#f87171';
+            const tdir = c.tDir;
+            return `<tr ${!ranked?'style="opacity:.55;"':''}>
+              <td>${medal}</td>
+              <td>
+                <div style="font-size:12.5px;color:var(--text);">${c.n}</div>
+                <div><span class="badge ${c.r==='Senior'?'b-asgn':'b-pend'}" style="background:none;font-size:8.5px;">${c.r}</span></div>
+              </td>
+              <td style="font-family:var(--mono);font-size:12px;color:var(--t2);">${c.totalAssign}<span style="font-size:9px;color:var(--t3);"> (${c.count} ประเมิน)</span></td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--t2);">${c.wuPerDay.toFixed(2)}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <div class="prog" style="width:50px;"><div class="pf" style="width:${c.avg/10*100}%;background:${avg_clr};"></div></div>
+                  <span style="font-family:var(--mono);font-size:11px;color:${avg_clr};">${c.avg?c.avg.toFixed(1):0}/10</span>
+                </div>
+              </td>
+              <td>
+                ${ranked
+                  ? `<div style="font-size:16px;font-weight:800;color:${sc_clr};">${c.score}</div><div style="font-size:9px;color:var(--t3);">Perf. Score</div>`
+                  : `<div style="font-size:10px;color:var(--t3);font-style:italic;">ต้องมี≥5หมาย<br>(มี ${c.count})</div>`}
+              </td>
+              <td>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <i class="fa-solid ${TDIR_IC[tdir]}" style="font-size:11px;color:${TDIR_CLR[tdir]};"></i>
+                  ${c.trend.length>=2 ? `<span style="font-size:10px;color:${TDIR_CLR[tdir]};">${c.trend[c.trend.length-1].avg}/10</span>` : '<span style="font-size:9.5px;color:var(--t3);">—</span>'}
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+          ${!camStats.length?`<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:28px;">ยังไม่มีข้อมูล</td></tr>`:''}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function rtRenderInd() {
+  const hasCams = CAMERAMEN.filter(c => ASSIGN.some(a=>(a.cams||[]).some(x=>x.name===c.n)||a.cam===c.n));
+  document.getElementById('rt-wrap').innerHTML = `
+  <div class="fi">
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-end;">
+      <div style="flex:1;min-width:160px;">
+        <label class="lbl">เลือกช่างภาพ</label>
+        <select id="sc-ind-cam" onchange="rtShowInd(this.value)" class="inp">
+          <option value="">-- เลือก --</option>
+          ${hasCams.map(c=>`<option value="${c.n}">${c.n}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="lbl">ช่วงเวลา</label>
+        <div class="seg">
+          <button class="sb on" onclick="indSegChange('all',this)">ทั้งหมด</button>
+          <button class="sb"    onclick="indSegChange('year',this)">ปี</button>
+          <button class="sb"    onclick="indSegChange('month',this)">เดือน</button>
+          <button class="sb"    onclick="indSegChange('day',this)">วัน</button>
+        </div>
+      </div>
+      <div id="ind-date-wrap" style="display:none;">
+        <label class="lbl">อ้างอิงวัน/เดือน/ปี</label>
+        <input type="date" id="ind-ref-date" class="inp" style="font-size:11.5px;padding:5px 9px;" value="${today()}" onchange="rtShowInd(document.getElementById('sc-ind-cam')?.value)">
+      </div>
+    </div>
+    <div id="rt-ind"><div style="padding:40px;text-align:center;color:var(--t3);">เลือกช่างภาพเพื่อดูสรุป</div></div>
+  </div>`;
+  window._indSeg = 'all';
+}
+
+function indSegChange(seg, btn) {
+  window._indSeg = seg;
+  btn.closest('.seg').querySelectorAll('.sb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const wrap = document.getElementById('ind-date-wrap');
+  if (wrap) wrap.style.display = seg==='all' ? 'none' : '';
+  const cam = document.getElementById('sc-ind-cam')?.value;
+  if (cam) rtShowInd(cam);
+}
+
+function rtShowInd(name) {
+  if (!name) return;
+  const seg = window._indSeg || 'all';
+  const ref = document.getElementById('ind-ref-date')?.value || today();
+  let myA = ASSIGN.filter(a=>(a.cams||[]).some(c=>c.name===name)||a.cam===name);
+  if (seg==='day')   myA = myA.filter(a=>a.date===ref);
+  else if (seg==='month') myA = myA.filter(a=>a.date.slice(0,7)===ref.slice(0,7));
+  else if (seg==='year')  myA = myA.filter(a=>a.date.slice(0,4)===ref.slice(0,4));
+  const rated    = myA.filter(a => a.rating !== undefined && a.rated_cam !== undefined);
+  const avg      = rated.length ? (rated.reduce((s,a)=>s+(a.rating||0),0)/rated.length).toFixed(1) : '—';
+  const avgPct   = avg !== '—' ? Math.round(parseFloat(avg)/10*100)+'%' : '—';
+  const totalWU  = myA.reduce((s,a)=>(s+(a.job_weight||calcJobWeight(a).wu)),0).toFixed(1);
+  const driveDays = [...new Set(myA.filter(a=>(a.cams||[]).some(c=>c.name===name&&c.drive)).map(a=>a.date))].length;
+  const SCORE_BUCKETS = [{lb:'0-3',clr:'#f87171'},{lb:'4-5',clr:'#fb923c'},{lb:'6-7',clr:'#facc15'},{lb:'8-9',clr:'#86efac'},{lb:'10',clr:'#4ade80'}];
+  const dist10 = [
+    rated.filter(a=>(a.rating||0)<=3).length,
+    rated.filter(a=>(a.rating||0)>=4&&(a.rating||0)<=5).length,
+    rated.filter(a=>(a.rating||0)>=6&&(a.rating||0)<=7).length,
+    rated.filter(a=>(a.rating||0)>=8&&(a.rating||0)<=9).length,
+    rated.filter(a=>(a.rating||0)===10).length,
+  ];
+  const maxDist  = Math.max(...dist10, 1);
+  const avgF     = parseFloat(avg)||0;
+  const avgColor = avgF>=8?'#4ade80':avgF>=6?'#facc15':avgF>=4?'#fb923c':avg==='—'?'var(--t3)':'#f87171';
+  // Trend
+  const trend    = calcTrend(name, myA);
+  const tlen     = trend.length;
+  const trendDir = tlen>=2?(trend[tlen-1].avg>trend[tlen-2].avg?'up':trend[tlen-1].avg<trend[tlen-2].avg?'down':'flat'):'flat';
+  const TDIR_IC2 = {up:'fa-arrow-trend-up',down:'fa-arrow-trend-down',flat:'fa-minus'}[trendDir];
+  const TDIR_C   = {up:'#4ade80',down:'#f87171',flat:'var(--t3)'}[trendDir];
+  // Badges
+  const badges   = calcBadges(name, myA);
+  // Performance Score
+  const perfData = calcPerfScore(name, myA);
+  const perfScore = perfData.score;
+
+  document.getElementById('rt-ind').innerHTML = `
+  <!-- Stats row -->
+  <div class="g4" style="margin-bottom:14px;">
+    ${[
+      {l:'หมายทั้งหมด',  v:myA.length,                           c:'var(--text)'},
+      {l:'คะแนนเฉลี่ย', v:avg==='—'?'—':avg+'/10 ('+avgPct+')', c:avgColor},
+      {l:'WU สะสม',      v:totalWU+' WU',                        c:'var(--acc)'},
+      {l:'ขับรถเอง',     v:driveDays+' วัน',                     c:'#60a5fa'},
+    ].map(s=>`<div class="stat"><div style="font-size:9.5px;color:var(--t3);margin-bottom:3px;">${s.l}</div><div style="font-size:13px;font-weight:800;color:${s.c};">${s.v}</div></div>`).join('')}
+  </div>
+  <!-- Trend chart -->
+  ${trend.length>=2 ? `<div class="card" style="padding:13px 15px;margin-bottom:13px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text);">Trend คะแนนรายเดือน</div>
+      <div style="font-size:10px;color:${TDIR_C};">
+        <i class="fa-solid ${TDIR_IC2}"></i> ${trendDir==='up'?'กำลังพัฒนา':trendDir==='down'?'ต้องติดตาม':'คงที่'}
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:60px;">
+      ${trend.map(t=>{
+        const h=Math.round(t.avg/10*100);
+        const clr=t.avg>=8?'#4ade80':t.avg>=6?'#facc15':t.avg>=4?'#fb923c':'#f87171';
+        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">'
+          +'<div style="font-size:9.5px;font-weight:700;color:'+clr+';">'+t.avg+'</div>'
+          +'<div style="width:100%;background:'+clr+'33;border-radius:4px 4px 0 0;height:'+h+'%;border:1px solid '+clr+'55;position:relative;">'
+          +'<div style="position:absolute;bottom:0;left:0;right:0;height:'+h+'%;background:'+clr+';border-radius:4px 4px 0 0;min-height:3px;"></div>'
+          +'</div>'
+          +'<div style="font-size:8.5px;color:var(--t3);">'+t.ym.slice(5)+'</div>'
+          +'</div>';
+      }).join('')}
+    </div>
+  </div>` : ''}
+  <!-- Badges -->
+  ${badges.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px;">
+    ${badges.map(b=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;background:${b.clr}18;border:1px solid ${b.clr}44;">
+      <i class="fa-solid ${b.ic}" style="font-size:10px;color:${b.clr};"></i>
+      <div>
+        <div style="font-size:10.5px;font-weight:700;color:${b.clr};">${b.lb}</div>
+        <div style="font-size:9px;color:var(--t3);">${b.desc}</div>
+      </div>
+    </div>`).join('')}
+  </div>` : ''}
+  <!-- Score distribution -->
+  ${rated.length ? `<div class="card" style="padding:13px 15px;margin-bottom:13px;">
+    <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:10px;">การกระจายคะแนน (จาก 10)</div>
+    <div style="display:flex;flex-direction:column;gap:5px;">
+    ${SCORE_BUCKETS.map((b,i)=>{
+      const cnt=dist10[i]; const pct=Math.round(cnt/maxDist*100);
+      return `<div style="display:flex;align-items:center;gap:7px;">
+        <div style="font-size:10px;color:${b.clr};font-family:var(--mono);font-weight:700;width:28px;text-align:right;">${b.lb}</div>
+        <div style="flex:1;height:14px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--border);">
+          <div style="height:100%;width:${pct}%;background:${b.clr};border-radius:4px;min-width:${cnt>0?3:0}px;"></div>
+        </div>
+        <div style="font-family:var(--mono);font-size:10.5px;color:var(--t2);width:20px;text-align:right;">${cnt}</div>
+      </div>`;
+    }).join('')}
+    </div>
+  </div>` : ''}
+  <!-- Detail table with comments -->
+  <div class="card" style="overflow:hidden;">
+    <table class="tbl">
+      <thead><tr><th>วันที่</th><th>หมายข่าว</th><th>ขับรถ</th><th>คะแนน</th><th>ความเห็น / Confidential</th></tr></thead>
+      <tbody>
+        ${myA.sort((a,b)=>b.date.localeCompare(a.date)).map(a=>{
+          return `<tr>
+            <td><div style="font-size:12px;color:var(--text);">${a.date}</div><div style="font-size:8.5px;font-family:var(--mono);color:var(--t3);">${a.id}</div></td>
+            <td style="font-size:12px;color:var(--text);max-width:200px;">${a.title}<br><span style="font-size:9.5px;color:var(--t3);">${a.job_weight?'WU '+a.job_weight:''}</span></td>
+            <td>${(a.cams||[]).some(c=>c.name===name&&c.drive)?'<span class="badge b-done">+150฿/วัน</span>':'<span style="color:var(--t3);">—</span>'}</td>
+            <td>${(a.rating !== undefined && a.rated_cam !== undefined) ? (()=>{
+              const sc=a.rating||0; const sc_clr=sc>=8?'#4ade80':sc>=6?'#facc15':sc>=4?'#fb923c':'#f87171';
+              const chips=a.scores?Object.entries(a.scores).map(([k,v])=>{const cr=CRITERIA.find(c=>c.id===k);return cr?'<div title="'+cr.lb+'" style="width:8px;height:8px;border-radius:2px;background:'+(v===2?'#4ade80':v===1?'#facc15':'#f87171')+';display:inline-block;"></div>':''}).join(''):'';
+              return '<div style="font-size:15px;font-weight:800;color:'+sc_clr+';">'+sc+'<span style="font-size:9px;color:var(--t3);">/10</span></div>'+(chips?'<div style="display:flex;gap:2px;flex-wrap:wrap;margin-top:2px;">'+chips+'</div>':'');
+            })():'<span style="color:var(--t3);font-size:11px;">รอประเมิน</span>'}</td>
+            <td style="max-width:200px;">
+              ${a.r_comment
+                ? `<div style="font-size:11.5px;color:var(--t2);line-height:1.55;">${a.r_comment}</div>
+                   <div style="font-size:9.5px;color:var(--t3);margin-top:3px;">— ${a.issuer||'ผู้ออกหมาย'}</div>`
+                : `<span style="font-size:11px;color:var(--t4);font-style:italic;">ไม่มีความเห็น</span>`}
+            </td>
+          </tr>`;
+        }).join('')}
+        ${!myA.length?`<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:20px;">ไม่มีข้อมูลในช่วงนี้</td></tr>`:''}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: MY SCORE (Feedback Loop สำหรับช่างภาพ)
+══════════════════════════════════════════════════════════ */
+function pgMyScore() {
+  const w = document.getElementById('pg-wrap'); if (!w) return;
+  const name = CU.name;
+  const myA  = ASSIGN.filter(a=>(a.cams||[]).some(c=>c.name===name)||a.cam===name);
+  const rated = myA.filter(a=>a.rating!==undefined&&a.rated_cam!==undefined);
+  const avg   = rated.length ? (rated.reduce((s,a)=>s+(a.rating||0),0)/rated.length).toFixed(1) : null;
+  const avgF  = parseFloat(avg)||0;
+  const avgClr= avgF>=8?'#4ade80':avgF>=6?'#facc15':avgF>=4?'#fb923c':'#f87171';
+  const trend = calcTrend(name, myA);
+  const tlen  = trend.length;
+  const tDir  = tlen>=2?(trend[tlen-1].avg>trend[tlen-2].avg?'up':trend[tlen-1].avg<trend[tlen-2].avg?'down':'flat'):'flat';
+  const TDIR_IC = {up:'fa-arrow-trend-up',down:'fa-arrow-trend-down',flat:'fa-minus'};
+  const TDIR_C  = {up:'#4ade80',down:'#f87171',flat:'var(--t3)'};
+  const badges  = calcBadges(name, myA);
+  const perf    = calcPerfScore(name, myA);
+  const streak  = calcStreak(name, myA);
+
+  // criteria averages (ไม่บอก comment ดิบ)
+  const crAvg = {};
+  CRITERIA.forEach(c=>{ crAvg[c.id]=[]; });
+  rated.forEach(a=>{ if(a.scores) Object.entries(a.scores).forEach(([k,v])=>{ if(crAvg[k]) crAvg[k].push(v); }); });
+
+  w.innerHTML = `
+  <div class="pg fu">
+    <div style="max-width:760px;margin:0 auto;">
+      <!-- Header -->
+      <div class="card" style="padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:14px;">
+        <div class="av" style="width:48px;height:48px;font-size:16px;background:#b45309;flex-shrink:0;">${name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()}</div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:700;color:var(--text);">${name}</div>
+          <div style="font-size:11px;color:var(--t3);">ช่างภาพ · ${myA.length} หมาย · WU สะสม ${perf.totalWU.toFixed(1)}</div>
+        </div>
+        ${perf.score !== null
+          ? `<div style="text-align:center;padding:8px 14px;border-radius:10px;background:var(--adim);border:1px solid var(--aglow);">
+              <div style="font-size:9.5px;color:var(--t3);">Performance</div>
+              <div style="font-size:22px;font-weight:800;color:var(--acc);">${perf.score}</div>
+            </div>`
+          : `<div style="font-size:10px;color:var(--t3);padding:8px;text-align:center;">ต้องมี≥5หมาย<br>จึงจะคำนวณ</div>`}
+      </div>
+
+      <!-- คะแนนรวม + Trend -->
+      <div class="g2" style="margin-bottom:14px;">
+        <div class="card" style="padding:16px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">คะแนนเฉลี่ยของคุณ</div>
+          ${avg ? `
+          <div style="font-size:42px;font-weight:900;color:${avgClr};line-height:1;">${avg}</div>
+          <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">จาก 10 คะแนน · ${rated.length} หมายที่ถูกประเมิน</div>
+          <div class="prog"><div class="pf" style="width:${avgF/10*100}%;background:${avgClr};"></div></div>` : `<div style="color:var(--t3);font-size:12px;margin-top:10px;">ยังไม่มีผลประเมิน</div>`}
+        </div>
+        <div class="card" style="padding:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text);">Trend รายเดือน</div>
+            ${tlen>=2?`<div style="font-size:10.5px;color:${TDIR_C[tDir]};"><i class="fa-solid ${TDIR_IC[tDir]}"></i> ${tDir==='up'?'กำลังดีขึ้น':tDir==='down'?'ระวัง! ลดลง':'คงที่'}</div>`:''}
+          </div>
+          ${trend.length>=2
+            ? `<div style="display:flex;align-items:flex-end;gap:5px;height:70px;">
+                ${trend.map(t=>{
+                  const h=Math.round(t.avg/10*100);
+                  const c2=t.avg>=8?'#4ade80':t.avg>=6?'#facc15':t.avg>=4?'#fb923c':'#f87171';
+                  return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">'
+                    +'<div style="font-size:9.5px;font-weight:700;color:'+c2+';">'+t.avg+'</div>'
+                    +'<div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:45px;">'
+                    +'<div style="background:'+c2+';border-radius:3px 3px 0 0;min-height:3px;height:'+h+'%;opacity:.85;"></div></div>'
+                    +'<div style="font-size:8px;color:var(--t3);">'+t.ym.slice(5)+'</div></div>';
+                }).join('')}
+              </div>`
+            : '<div style="color:var(--t3);font-size:11px;margin-top:10px;">ต้องมีข้อมูล 2 เดือนขึ้นไป</div>'}
+        </div>
+      </div>
+
+      <!-- Criteria breakdown -->
+      ${rated.length ? `<div class="card" style="padding:16px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:12px;">คะแนนรายหัวข้อ</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          ${CRITERIA.map(c=>{
+            const scores = crAvg[c.id]||[];
+            const cavg = scores.length ? scores.reduce((s,v)=>s+v,0)/scores.length : null;
+            const cpct = cavg!==null ? Math.round(cavg/2*100) : 0;
+            const cclr = cpct>=80?'#4ade80':cpct>=50?'#facc15':'#f87171';
+            const clbl = cpct>=80?'ดี':cpct>=50?'พอใช้':'ต้องพัฒนา';
+            return '<div style="display:flex;align-items:center;gap:10px;">'
+              +'<div style="width:14px;text-align:center;flex-shrink:0;"><i class="fa-solid '+c.ic+'" style="font-size:10px;color:var(--t3);"></i></div>'
+              +'<div style="flex:1;">'
+              +'<div style="display:flex;justify-content:space-between;margin-bottom:3px;">'
+              +'<span style="font-size:11.5px;font-weight:600;color:var(--text);">'+c.lb+'</span>'
+              +'<span style="font-size:10.5px;font-weight:700;color:'+cclr+';">'+clbl+'</span>'
+              +'</div>'
+              +'<div class="prog"><div class="pf" style="width:'+cpct+'%;background:'+cclr+';transition:width .6s;"></div></div>'
+              +'</div>'
+              +'</div>';
+          }).join('')}
+        </div>
+        <div style="margin-top:11px;padding:7px 10px;border-radius:7px;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.13);font-size:10.5px;color:#60a5fa;">
+          <i class="fa-solid fa-lock" style="font-size:9px;margin-right:5px;"></i>เห็นเฉพาะภาพรวมของตัวเอง — ไม่เห็น comment ดิบจาก บก.
+        </div>
+      </div>` : ''}
+
+      <!-- Streak -->
+      <div class="card" style="padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">
+        <div style="text-align:center;padding:8px 14px;border-radius:8px;background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.25);">
+          <i class="fa-solid fa-fire" style="font-size:18px;color:#fb923c;display:block;margin-bottom:3px;"></i>
+          <div style="font-size:18px;font-weight:800;color:#fb923c;">${streak.current}</div>
+          <div style="font-size:9px;color:var(--t3);">Streak ปัจจุบัน</div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text);">หมายติดกันที่ได้ ≥ 8/10</div>
+          <div style="font-size:10.5px;color:var(--t3);margin-top:2px;">สูงสุดที่เคยทำได้: ${streak.best} หมาย</div>
+          ${streak.current>=5?`<div style="margin-top:5px;font-size:10px;color:#fb923c;font-weight:600;">🔥 กำลัง Hot Streak!</div>`:''}
+        </div>
+      </div>
+
+      <!-- Badges -->
+      ${badges.length ? `<div class="card" style="padding:14px 16px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:10px;">Badges ที่ได้รับ</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;">
+          ${badges.map(b=>`<div style="display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:10px;background:${b.clr}14;border:1px solid ${b.clr}40;">
+            <i class="fa-solid ${b.ic}" style="font-size:14px;color:${b.clr};"></i>
+            <div><div style="font-size:11px;font-weight:700;color:${b.clr};">${b.lb}</div><div style="font-size:9.5px;color:var(--t3);">${b.desc}</div></div>
+          </div>`).join('')}
+        </div>
+      </div>` : `<div class="card" style="padding:13px 15px;margin-bottom:14px;display:flex;align-items:center;gap:9px;opacity:.6;">
+        <i class="fa-solid fa-medal" style="font-size:18px;color:var(--t3);"></i>
+        <div style="font-size:11px;color:var(--t3);">ยังไม่มี Badges — ทำหมายเพิ่มเพื่อปลดล็อก</div>
+      </div>`}
+
+      <!-- Appeal section -->
+      <div class="card" style="padding:14px 16px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:8px;"><i class="fa-solid fa-flag" style="color:var(--acc);margin-right:6px;"></i>โต้แย้งผลการประเมิน</div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:10px;">ถ้าคิดว่าผลการประเมินหมายใดไม่ยุติธรรม สามารถส่งเรื่องให้ Admin พิจารณาได้</div>
+        <select id="appeal-assign" class="inp" style="margin-bottom:8px;font-size:11.5px;">
+          <option value="">-- เลือกหมายที่ต้องการโต้แย้ง --</option>
+          ${rated.map(a=>`<option value="${a.id}">${a.date} · ${a.title.slice(0,30)} (${a.rating||0}/10)</option>`).join('')}
+        </select>
+        <textarea id="appeal-reason" class="inp" rows="2" placeholder="เหตุผลที่คิดว่าไม่ยุติธรรม..."></textarea>
+        <button onclick="submitAppeal()" class="btn bp bsm" style="margin-top:8px;"><i class="fa-solid fa-paper-plane"></i> ส่งเรื่องโต้แย้ง</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function submitAppeal() {
+  const id  = document.getElementById('appeal-assign')?.value;
+  const reason = document.getElementById('appeal-reason')?.value?.trim();
+  if (!id)     { toast('กรุณาเลือกหมายที่ต้องการโต้แย้ง','err'); return; }
+  if (!reason) { toast('กรุณาระบุเหตุผล','err'); return; }
+  // บันทึกใน localStorage
+  const key = 'tnn_appeals_v5';
+  let appeals = [];
+  try { appeals = JSON.parse(localStorage.getItem(key)||'[]'); } catch{}
+  appeals.push({
+    id: 'APL-'+Date.now(), assignId:id, camName:CU.name,
+    reason, status:'pending', date: today(),
+  });
+  localStorage.setItem(key, JSON.stringify(appeals));
+  document.getElementById('appeal-assign').value='';
+  document.getElementById('appeal-reason').value='';
+  toast('ส่งเรื่องโต้แย้งแล้ว — Admin จะพิจารณาภายใน 3 วันทำการ');
+}
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: DRIVE REPORT
+══════════════════════════════════════════════════════════ */
+function pgDrive() {
+  const w = document.getElementById('pg-wrap');
+  w.innerHTML = `
+  <div class="pg fu">
+    <div style="max-width:860px;margin:0 auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:7px;">
+        <div>
+          <div style="font-size:13.5px;font-weight:700;color:var(--text);">รายงานค่าขับรถ</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px;">150 บาทต่อวัน ต่อคน — ไม่ว่าจะขับกี่หมายใน 1 วัน คิดแค่ 150 บาท</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <div style="font-size:11px;color:var(--t3);padding:5px 9px;background:var(--adim);border:1px solid var(--aglow);border-radius:7px;" id="drv-gd-lbl"></div>
+          <select id="drv-c" onchange="driveRender()" class="inp" style="width:auto;font-size:11.5px;padding:5px 9px;">
+            <option value="">ช่างภาพทุกคน</option>
+            ${[...new Set(ASSIGN.flatMap(a=>(a.cams||[]).filter(c=>c.drive).map(c=>c.name)))].map(n=>`<option>${n}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="g3" style="margin-bottom:18px;" id="drv-stats"></div>
+      <div class="card" style="overflow:hidden;" id="drv-tbl"></div>
+    </div>
+  </div>`;
+  driveRender();
+}
+
+function driveRender() {
+  const cam   = document.getElementById('drv-c')?.value||'';
+  const MODE_LBL3 = {day:'วันที่ '+GD.date, month:'เดือน '+GD.month, year:'ปี '+(parseInt(GD.year)+543), all:'ทั้งหมด', range:GD.rangeFrom&&GD.rangeTo?GD.rangeFrom+' ถึง '+GD.rangeTo:'—'};
+  const lbl3 = document.getElementById('drv-gd-lbl');
+  if (lbl3) lbl3.textContent = MODE_LBL3[GD.mode]||'ทั้งหมด';
+
+  // collect all drive rows (per-cam per-assignment) — filtered by global GD
+  let allRows = [];
+  gdFilter([...ASSIGN]).forEach(a => {
+    (a.cams||[]).filter(c=>c.drive).forEach(c => {
+      if (cam && c.name!==cam) return;
+      allRows.push({date:a.date, id:a.id, title:a.title, cam_name:c.name, vhc:a.vhc||''});
+    });
+  });
+  allRows.sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));
+
+  // คำนวณ 150฿/วัน/คน — หมวดตาม (date, cam_name) คู่เดียวกัน = 150 บาทรวม ไม่ว่ากี่หมาย
+  const dayMap = {}; // key = "date_camname"
+  allRows.forEach(r => {
+    const key = r.date + '__' + r.cam_name;
+    if (!dayMap[key]) dayMap[key] = {date:r.date, cam_name:r.cam_name, assignments:[]};
+    dayMap[key].assignments.push(r);
+  });
+
+  // unique days per cam (each = 150฿)
+  const dayEntries = Object.values(dayMap).sort((a,b)=>(b.date+b.cam_name).localeCompare(a.date+a.cam_name));
+  const billableDays = dayEntries.length;
+  const total = billableDays * 150;
+  const camSet = [...new Set(allRows.map(r=>r.cam_name))];
+
+  const ss = document.getElementById('drv-stats');
+  if (ss) ss.innerHTML = [
+    {l:'หมายที่ขับเอง (ทั้งหมด)',  v:allRows.length,   c:'var(--text)'},
+    {l:'วัน × คน (ที่เรียกเก็บได้)', v:billableDays,     c:'#facc15'},
+    {l:'ช่างภาพที่เกี่ยวข้อง',       v:camSet.length,    c:'#60a5fa'},
+    {l:'ยอดรวม',                      v:total.toLocaleString()+' ฿', c:'#4ade80'},
+  ].map(s=>`<div class="stat"><div style="font-size:9.5px;color:var(--t3);margin-bottom:3px;">${s.l}</div><div style="font-size:${s.l.includes('ยอดรวม')?'18':'22'}px;font-weight:800;color:${s.c};">${s.v}</div></div>`).join('');
+
+  // build table: group rows under each billable day
+  const tb = document.getElementById('drv-tbl');
+  if (!tb) return;
+
+  let tbRows = '';
+  dayEntries.forEach(day => {
+    const isMulti = day.assignments.length > 1;
+    day.assignments.forEach((r, ri) => {
+      tbRows += `<tr ${isMulti&&ri===0?'style="border-top:2px solid var(--border);"':''}>
+        <td style="font-family:var(--mono);font-size:11.5px;color:var(--text);">${ri===0?r.date:''}</td>
+        <td style="font-family:var(--mono);font-size:9px;color:var(--t3);">${r.id}</td>
+        <td style="font-size:11.5px;color:var(--text);max-width:200px;">${r.title}</td>
+        <td style="font-size:11.5px;color:var(--t2);">${ri===0?r.cam_name:''}</td>
+        <td style="font-size:11px;color:var(--t3);">${r.vhc||'—'}</td>
+        <td>${ri===0
+          ? `<span style="font-family:var(--mono);font-size:12px;font-weight:700;color:#4ade80;">+150 ฿</span>
+             ${isMulti?`<div style="font-size:9.5px;color:var(--t3);margin-top:1px;">${day.assignments.length} หมาย รวม 1 วัน</div>`:''}`
+          : `<span style="font-size:9.5px;color:var(--t4);">—</span>`}
+        </td>
+      </tr>`;
+    });
+  });
+
+  tb.innerHTML = `
+  <div style="padding:9px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;background:rgba(234,179,8,.04);">
+    <i class="fa-solid fa-circle-info" style="font-size:10px;color:#facc15;flex-shrink:0;"></i>
+    <span style="font-size:11px;color:#facc15;">ค่าขับรถนับ <strong>150 บาทต่อวัน ต่อคน</strong> — หมายหลายหมายในวันเดียวกัน คนเดียวกัน คิดแค่ 150 บาท</span>
+  </div>
+  <table class="tbl">
+    <thead><tr><th>วันที่</th><th>รหัสหมาย</th><th>หมายข่าว</th><th>ช่างภาพ</th><th>รถ</th><th>ค่าขับ</th></tr></thead>
+    <tbody>
+      ${tbRows||`<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:28px;">ไม่มีข้อมูล</td></tr>`}
+      ${billableDays?`<tr style="background:rgba(34,197,94,.03);">
+        <td colspan="5" style="font-size:12px;font-weight:700;color:var(--text);text-align:right;border-top:2px solid var(--border);">ยอดรวม (${billableDays} วัน × คน × 150฿)</td>
+        <td style="border-top:2px solid var(--border);"><span style="font-family:var(--mono);font-size:14px;font-weight:700;color:#4ade80;">${total.toLocaleString()} ฿</span></td>
+      </tr>`:''}
+    </tbody>
+  </table>`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: EQUIPMENT
+══════════════════════════════════════════════════════════ */
+function pgEquip() {
+  const canEdit = ['admin','chief_cam'].includes(CU.role);
+  // Build groups dynamically from actual EQUIP data
+  const types = [...new Set(EQUIP.map(e=>e.t))];
+  const groups = types.map(t=>({t, lb:EQ_META[t]?.lb||t, ic:EQ_META[t]?.ic||'fa-box'}));
+  const w = document.getElementById('pg-wrap');
+  w.innerHTML = `
+  <div class="pg fu">
+    <div style="max-width:820px;margin:0 auto;">
+      <div class="g3" style="margin-bottom:18px;">
+        ${[{l:'อุปกรณ์ทั้งหมด',v:EQUIP.length,c:'var(--text)'},{l:'ว่างพร้อมใช้',v:EQUIP.filter(e=>e.s==='available').length,c:'#4ade80'},{l:'ไม่ว่าง / ซ่อม',v:EQUIP.filter(e=>e.s!=='available').length,c:'#f87171'}]
+          .map(s=>`<div class="stat"><div style="font-size:9.5px;color:var(--t3);margin-bottom:3px;">${s.l}</div><div style="font-size:22px;font-weight:800;color:${s.c};">${s.v}</div></div>`).join('')}
+      </div>
+      ${canEdit?`<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:13px;">
+        <button onclick="openManageCats()" class="btn bg bsm"><i class="fa-solid fa-tags"></i> จัดการหมวดหมู่</button>
+        <button onclick="openAddEquip()" class="btn bp bsm"><i class="fa-solid fa-plus"></i> เพิ่มอุปกรณ์</button>
+      </div>`:''}
+      ${groups.map(g => {
+        const items = EQUIP.filter(e=>e.t===g.t);
+        if (!items.length) return '';
+        return `
+        <div style="margin-bottom:15px;">
+          <div class="slbl" style="display:flex;align-items:center;gap:5px;"><i class="fa-solid ${g.ic}"></i>${g.lb} <span style="opacity:.5;">(${items.length})</span></div>
+          <div class="card" style="overflow:hidden;">
+            <table class="tbl">
+              <thead><tr><th>รหัส</th><th>ชื่อ/รุ่น</th><th>สถานะ</th><th>ชม.</th>${canEdit?'<th>จัดการ</th>':''}</tr></thead>
+              <tbody>
+                ${items.map(e => {
+                  const sm2 = {available:{cls:'b-avail',lb:'ว่าง'},in_use:{cls:'b-inuse',lb:'ถูกเบิก'},maintenance:{cls:'b-maint',lb:'ส่งซ่อม'}};
+                  const s2 = sm2[e.s]||sm2.available;
+                  return `<tr>
+                    <td style="font-family:var(--mono);font-size:10px;color:var(--t2);">${e.c}</td>
+                    <td style="font-size:12.5px;color:var(--text);">${e.n}</td>
+                    <td>${canEdit
+                      ? `<select onchange="eqChangeStatus('${e.c}',this.value)" class="inp" style="font-size:10.5px;padding:3px 7px;width:auto;">
+                          <option value="available" ${e.s==='available'?'selected':''}>ว่าง</option>
+                          <option value="in_use" ${e.s==='in_use'?'selected':''}>ถูกเบิก</option>
+                          <option value="maintenance" ${e.s==='maintenance'?'selected':''}>ส่งซ่อม</option>
+                         </select>`
+                      : `<span class="badge ${s2.cls}">${s2.lb}</span>`}
+                    </td>
+                    <td style="font-family:var(--mono);font-size:10.5px;color:var(--t3);">${e.hrs||0}</td>
+                    ${canEdit?`<td>
+                      <div style="display:flex;gap:4px;">
+                        <button onclick="openEditEquip('${e.c}')" class="bic" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteEquip('${e.c}')" class="bic" style="color:var(--red);border-color:rgba(239,68,68,.18);" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                      </div>
+                    </td>`:''}
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function eqChangeStatus(code, val) {
+  const i = EQUIP.findIndex(e=>e.c===code); if (i<0) return;
+  EQUIP[i].s = val; saveEQ(); toast('อัปเดตสถานะแล้ว');
+}
+function openAddEquip() {
+  document.getElementById('eq-edit-code').value = '';
+  document.getElementById('eq-code').value = '';
+  document.getElementById('eq-name').value = '';
+  document.getElementById('eq-status').value = 'available';
+  document.getElementById('eq-code').disabled = false;
+  document.getElementById('m-equip-title').textContent = 'เพิ่มอุปกรณ์';
+  openM('m-equip');
+  buildEqTypeSelect('camera');  // หลัง modal เปิด
+}
+function openEditEquip(code) {
+  const e = EQUIP.find(x=>x.c===code); if (!e) return;
+  document.getElementById('m-equip-title').textContent = 'แก้ไขอุปกรณ์';
+  document.getElementById('eq-edit-code').value = code;
+  document.getElementById('eq-code').value = e.c;
+  document.getElementById('eq-name').value = e.n;
+  buildEqTypeSelect(e.t);
+  document.getElementById('eq-status').value = e.s;
+  document.getElementById('eq-code').disabled = true;
+  openM('m-equip');
+}
+function eqTypeChange() {
+  const v = document.getElementById('eq-type')?.value;
+  const d = document.getElementById('eq-type-new');
+  if (d) d.style.display = v === '__new__' ? 'block' : 'none';
+}
+function buildEqTypeSelect(selectedVal) {
+  const sel = document.getElementById('eq-type'); if (!sel) return;
+  sel.innerHTML = '';
+  Object.entries(EQ_META).forEach(([k,m]) => {
+    const o = document.createElement('option'); o.value=k; o.textContent=m.lb; sel.appendChild(o);
+  });
+  const newOpt = document.createElement('option'); newOpt.value='__new__'; newOpt.textContent='➕ เพิ่มหมวดหมู่ใหม่...'; sel.appendChild(newOpt);
+  if (selectedVal) sel.value = selectedVal;
+  document.getElementById('eq-type-new').style.display = 'none';
+}
+function saveEquip() {
+  const editCode = document.getElementById('eq-edit-code').value;
+  const code = document.getElementById('eq-code').value.trim();
+  const name = document.getElementById('eq-name').value.trim();
+  let type = document.getElementById('eq-type').value;
+  if (type === '__new__') {
+    const key = document.getElementById('eq-type-custom-key')?.value?.trim().toLowerCase().replace(/[^a-z0-9_]/g,'-');
+    const lb  = document.getElementById('eq-type-custom-lb')?.value?.trim();
+    if (!key || !lb) { toast('กรุณาระบุ key และชื่อหมวดหมู่ใหม่','err'); return; }
+    type = key;
+    if (!EQ_META[type]) { EQ_META[type] = { lb, ic:'fa-box' }; saveEQMeta(); }
+  }
+  const status = document.getElementById('eq-status').value;
+  if (!code||!name) { toast('กรุณากรอกข้อมูลที่จำเป็น','err'); return; }
+  if (editCode) {
+    const i = EQUIP.findIndex(e=>e.c===editCode);
+    if (i>=0) EQUIP[i] = {...EQUIP[i], n:name, t:type, s:status};
+  } else {
+    if (EQUIP.find(e=>e.c===code)) { toast('รหัสนี้มีแล้วในระบบ','err'); return; }
+    EQUIP.push({c:code, n:name, t:type, s:status, hrs:0});
+  }
+  saveEQ(); closeM('m-equip'); toast(editCode?'แก้ไขอุปกรณ์แล้ว':'เพิ่มอุปกรณ์แล้ว'); pgEquip();
+}
+function deleteEquip(code) {
+  if (!confirm(`ยืนยันลบ ${code}?`)) return;
+  EQUIP = EQUIP.filter(e=>e.c!==code); saveEQ(); toast('ลบอุปกรณ์แล้ว','warn'); pgEquip();
+}
+
+/* ══════════════════════════════════════════════════════════
+   PAGE: USERS
+══════════════════════════════════════════════════════════ */
+function pgUsers() {
+  const allU = [
+    ...Object.entries(USERS).map(([u,d])=>({u,n:d.name,e:d.empid,r:d.role})),
+    ...CAMERAMEN.filter(c=>!Object.values(USERS).find(u=>u.name===c.n)).map((c,i)=>({u:'cam'+(i+10),n:c.n,e:c.e||'',r:'cameraman'})),
+  ];
+  const w = document.getElementById('pg-wrap');
+  w.innerHTML = `
+  <div class="pg fu">
+    <div style="max-width:900px;margin:0 auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:7px;">
+        <div style="font-size:11.5px;color:var(--t3);">${allU.length} บัญชีทั้งหมด</div>
+        <button onclick="openM('m-user')" class="btn bp bsm"><i class="fa-solid fa-user-plus"></i> เพิ่มบุคลากร</button>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:13px;" id="role-btns">
+        ${['ทั้งหมด','admin','chief_cam','editor','cameraman'].map((r,i)=>
+          `<button onclick="fltrRole('${r}',this)" style="padding:4px 11px;font-size:10.5px;border-radius:20px;border:1px solid ${i===0?'transparent':'var(--border)'};background:${i===0?'var(--acc)':'transparent'};color:${i===0?'#fff':'var(--t2)'};cursor:pointer;font-family:var(--sans);transition:all .15s;">
+            ${r==='ทั้งหมด'?'ทั้งหมด':RLABEL[r]||r}
+          </button>`
+        ).join('')}
+      </div>
+      <div class="card" style="overflow:hidden;">
+        <table class="tbl">
+          <thead><tr><th>ชื่อ-สกุล</th><th>รหัสพนักงาน</th><th>Username</th><th>Role</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+          <tbody id="u-tbody">
+            ${allU.map(u=>`
+            <tr data-role="${u.r}">
+              <td>
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <div style="width:24px;height:24px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;color:var(--t2);flex-shrink:0;">${ini(u.n)}</div>
+                  <span style="font-size:12.5px;color:var(--text);">${u.n}</span>
+                </div>
+              </td>
+              <td style="font-family:var(--mono);font-size:10.5px;color:var(--t2);">${u.e||'—'}</td>
+              <td style="font-family:var(--mono);font-size:10.5px;color:var(--t2);">${u.u}</td>
+              <td><span class="badge" style="background:rgba(255,255,255,.04);color:var(--t2);border-color:var(--border);">${RLABEL[u.r]||u.r}</span></td>
+              <td><span class="badge b-done">ใช้งาน</span></td>
+              <td>
+                <div style="display:flex;gap:4px;">
+                  <button onclick="openM('m-user')" class="bic" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+                  <button class="bic" style="color:rgba(239,68,68,.5);" title="ระงับ"><i class="fa-solid fa-ban"></i></button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+}
+
+function fltrRole(r, btn) {
+  document.querySelectorAll('#role-btns button').forEach(b=>{b.style.background='transparent';b.style.color='var(--t2)';b.style.border='1px solid var(--border)';});
+  btn.style.background='var(--acc)'; btn.style.color='#fff'; btn.style.border='1px solid transparent';
+  document.querySelectorAll('#u-tbody tr').forEach(tr=>{ tr.style.display=(r==='ทั้งหมด'||tr.dataset.role===r)?'':'none'; });
+}
+function saveUser() {
+  const n=document.getElementById('u-name').value.trim(),r=document.getElementById('u-role').value,u=document.getElementById('u-uname').value.trim(),p=document.getElementById('u-pass').value;
+  if(!n||!r||!u||!p){toast('กรุณากรอกข้อมูลที่จำเป็น (*)','err');return;}
+  toast(`บันทึก ${n} (${RLABEL[r]||r}) สำเร็จ!`);
+  closeM('m-user'); pgUsers();
+}
+
+/* ══════════════════════════════════════════════════════════
+   RATING MODAL
+══════════════════════════════════════════════════════════ */
+// ── Criteria definitions ────────────────────────────────────
+const CRITERIA = [
+  { id:'punctual',  lb:'ตรงต่อเวลา',          desc:'ถึง location ก่อนเริ่มงาน ไม่ทำให้งานล่าช้า',           ic:'fa-clock' },
+  { id:'quality',   lb:'คุณภาพงาน',            desc:'ภาพได้ตามบรีฟ ครบทุก Shot ที่ต้องการ',                 ic:'fa-camera' },
+  { id:'equip',     lb:'ความพร้อมอุปกรณ์',     desc:'อุปกรณ์พร้อมใช้ตลอด ไม่มีปัญหาเทคนิคกลางงาน',        ic:'fa-screwdriver-wrench' },
+  { id:'comm',      lb:'การสื่อสาร',            desc:'แจ้งสถานะ แจ้งปัญหา ประสานงานได้ดี',                   ic:'fa-comment-dots' },
+  { id:'pro',       lb:'ความเป็นมืออาชีพ',     desc:'ทัศนคติ ความกระตือรือร้น รับมือสถานการณ์ที่เปลี่ยน',  ic:'fa-medal' },
+];
+// คะแนน: good=2, ok=1, bad=0
+let _crScores = {};  // { punctual: 2, quality: 1, ... }
+
+// ── Job Weight Calculator ─────────────────────────────────
+function calcJobWeight(a) {
+  if (!a) return { wu: 1.0, label: 'หมายปกติ', breakdown: [] };
+  let wu = 1.0;
+  const bd = ['หมายปกติ +1.0'];
+  // Multi-day
+  if (a.date2 && a.date2 > a.date) {
+    const d1 = new Date(a.date+'T00:00:00');
+    const d2 = new Date(a.date2+'T00:00:00');
+    const days = Math.round((d2-d1)/(1000*60*60*24));
+    if (days > 0) { wu += days*0.8; bd.push(`+${days} วัน ×0.8 = +${(days*0.8).toFixed(1)}`); }
+  }
+  // ขับรถเอง
+  if ((a.cams||[]).some(c=>c.drive) || a.drive) { wu += 0.3; bd.push('+ขับรถเอง +0.3'); }
+  // ต่างจังหวัด (ถ้า loc ไม่มีคำว่า กรุงเทพ/นนทบุรี/ปทุม/สมุทร/นครปฐม/กรุงเทพมหานคร)
+  const bkk = ['กรุงเทพ','นนทบุรี','ปทุมธานี','สมุทร','นครปฐม','บึงกุ่ม','ลาดกระบัง','มีนบุรี'];
+  const loc = (a.loc||'').toLowerCase();
+  const isUpcountry = loc && !bkk.some(k => loc.includes(k));
+  if (isUpcountry) { wu += 0.5; bd.push('+ต่างจังหวัด +0.5'); }
+  // ป้ายคำ
+  let label = 'หมายปกติ';
+  if (wu >= 4)      label = 'งานหนักมาก';
+  else if (wu >= 2.5) label = 'งานหนัก';
+  else if (wu >= 1.5) label = 'งานปานกลาง';
+  return { wu: parseFloat(wu.toFixed(1)), label, breakdown: bd };
+}
+
+// ── Performance Score Engine ─────────────────────────────
+// 1. คำนวณ WU per day (ประสิทธิภาพต่อวัน)
+function calcWUperDay(camName, assignList) {
+  const myA = assignList.filter(a =>
+    (a.cams||[]).some(c=>c.name===camName) || a.cam===camName
+  );
+  const uniqueDays = new Set(myA.map(a=>a.date)).size;
+  const totalWU = myA.reduce((s,a) => s+(a.job_weight||calcJobWeight(a).wu), 0);
+  return { totalWU, uniqueDays, wuPerDay: uniqueDays>0 ? totalWU/uniqueDays : 0 };
+}
+
+// 2. คะแนนเฉลี่ย (0-10)
+function calcAvgScore(camName, assignList) {
+  const rated = assignList.filter(a =>
+    ((a.cams||[]).some(c=>c.name===camName)||a.cam===camName) &&
+    a.rating !== undefined && a.rated_cam !== undefined
+  );
+  if (!rated.length) return { avg:0, count:0, rated };
+  const avg = rated.reduce((s,a)=>s+(a.rating||0),0)/rated.length;
+  return { avg, count:rated.length, rated };
+}
+
+// 3. Performance Score = (avg/10) × wuPerDay × 10  (normalized)
+function calcPerfScore(camName, assignList) {
+  const { avg, count, rated } = calcAvgScore(camName, assignList);
+  const { totalWU, uniqueDays, wuPerDay } = calcWUperDay(camName, assignList);
+  const totalAssign = assignList.filter(a=>
+    (a.cams||[]).some(c=>c.name===camName)||a.cam===camName
+  ).length;
+  const score = count >= 5 ? parseFloat(((avg/10)*wuPerDay*10).toFixed(2)) : null;
+  return { avg, count, totalWU, uniqueDays, wuPerDay, score, totalAssign };
+}
+
+// 4. Trend: คะแนนรายเดือน (3 เดือนล่าสุด)
+function calcTrend(camName, assignList) {
+  const months = {};
+  assignList.filter(a =>
+    ((a.cams||[]).some(c=>c.name===camName)||a.cam===camName) &&
+    a.rating !== undefined && a.rated_cam !== undefined
+  ).forEach(a => {
+    const ym = a.date.slice(0,7);
+    if (!months[ym]) months[ym] = [];
+    months[ym].push(a.rating||0);
+  });
+  return Object.entries(months)
+    .sort(([a],[b])=>a.localeCompare(b))
+    .slice(-4)
+    .map(([ym,scores]) => ({
+      ym,
+      avg: parseFloat((scores.reduce((s,v)=>s+v,0)/scores.length).toFixed(1)),
+      count: scores.length,
+    }));
+}
+
+// 5. Streak: หมายต่อเนื่องที่ได้ ≥8
+function calcStreak(camName, assignList) {
+  const rated = assignList.filter(a =>
+    ((a.cams||[]).some(c=>c.name===camName)||a.cam===camName) &&
+    a.rating !== undefined && a.rated_cam !== undefined
+  ).sort((a,b)=>a.date.localeCompare(b.date));
+  let cur=0, best=0;
+  rated.forEach(a => { if((a.rating||0)>=8){cur++;best=Math.max(best,cur);}else cur=0; });
+  return { current:cur, best };
+}
+
+// 6. Calibration: บก. แต่ละคนให้คะแนนเฉลี่ยเท่าไหร่
+function calcCalibration(assignList) {
+  const issuerMap = {};
+  assignList.filter(a=>a.rating!==undefined&&a.rated_cam!==undefined&&a.issuer).forEach(a=>{
+    if (!issuerMap[a.issuer]) issuerMap[a.issuer] = [];
+    issuerMap[a.issuer].push(a.rating||0);
+  });
+  const results = Object.entries(issuerMap).map(([name,scores])=>({
+    name,
+    avg: parseFloat((scores.reduce((s,v)=>s+v,0)/scores.length).toFixed(1)),
+    count: scores.length,
+  })).filter(r=>r.count>=3).sort((a,b)=>b.avg-a.avg);
+  const teamAvg = results.length
+    ? parseFloat((results.reduce((s,r)=>s+r.avg,0)/results.length).toFixed(1)) : 5;
+  return { results, teamAvg };
+}
+
+// 7. Badges
+function calcBadges(camName, assignList) {
+  const badges = [];
+  const myA = assignList.filter(a=>(a.cams||[]).some(c=>c.name===camName)||a.cam===camName);
+  const rated = myA.filter(a=>a.rating!==undefined&&a.rated_cam!==undefined);
+  const { current:streak, best:bestStreak } = calcStreak(camName, assignList);
+  const abroad = myA.filter(a=>{
+    const bkk=['กรุงเทพ','นนทบุรี','ปทุม','สมุทร','นครปฐม'];
+    return (a.loc||'') && !bkk.some(k=>(a.loc||'').includes(k));
+  }).length;
+  const drove = myA.filter(a=>(a.cams||[]).some(c=>c.name===camName&&c.drive)).length;
+  const totalWU = myA.reduce((s,a)=>s+(a.job_weight||calcJobWeight(a).wu),0);
+  if (streak>=5) badges.push({ic:'fa-fire',lb:'Hot Streak',desc:'คะแนน ≥8 ติดกัน '+streak+' หมาย',clr:'#fb923c'});
+  if (bestStreak>=10) badges.push({ic:'fa-crown',lb:'Consistent Pro',desc:'เคยทำ 10 หมายติดได้ ≥8',clr:'#f5c518'});
+  if (abroad>=10) badges.push({ic:'fa-plane',lb:'Field Expert',desc:'หมายต่างจังหวัด '+abroad+' ครั้ง',clr:'#60a5fa'});
+  if (drove>=20) badges.push({ic:'fa-car',lb:'Road Warrior',desc:'ขับรถเอง '+drove+' ครั้ง',clr:'#4ade80'});
+  if (totalWU>=50) badges.push({ic:'fa-mountain',lb:'Heavy Lifter',desc:'WU สะสม '+totalWU.toFixed(0)+' WU',clr:'#a78bfa'});
+  if (myA.length>=50) badges.push({ic:'fa-star',lb:'Veteran',desc:'ผ่านมา '+myA.length+' หมาย',clr:'#facc15'});
+  return badges;
+}
+
+function crSetScore(cid, val) {
+  _crScores[cid] = val;
+  // อัปเดต button state
+  const row = document.getElementById('cr-row-'+cid);
+  if (!row) return;
+  row.querySelectorAll('.cr-btn').forEach(b => {
+    b.classList.remove('good','ok','bad');
+    if (b.dataset.val === String(val)) {
+      b.classList.add(val===2?'good':val===1?'ok':'bad');
+    }
+  });
+  // อัปเดตคะแนนรวม
+  const total = CRITERIA.reduce((s,c)=>s+(_crScores[c.id]??-1),0);
+  const filled = CRITERIA.filter(c=>_crScores[c.id]!==undefined).length;
+  const el = document.getElementById('mr-total');
+  if (el) el.textContent = filled===CRITERIA.length ? `${total}/10` : `${filled}/${CRITERIA.length} ข้อ`;
+}
+
+function openRating(id, camOverride) {
+  const a = ASSIGN.find(x=>x.id===id); if (!a) return;
+  const camList = (a.cams||[]).map(c=>c.name).filter(Boolean);
+  if (!camList.length && a.cam) camList.push(a.cam);
+  if (!camList.length) { toast('หมายนี้ยังไม่มีช่างภาพ — กรุณาจัดทีมก่อนประเมิน','warn'); return; }
+  const camName = camOverride || camList[0];
+
+  // reset scores
+  _crScores = {};
+  STAR = 0;
+
+  // fill header
+  document.getElementById('mr-id').textContent = id;
+  document.getElementById('mr-cam').textContent = camName;
+  document.getElementById('mr-av').textContent = ini(camName);
+  document.getElementById('mr-comment').value = '';
+  document.getElementById('mr-total').textContent = `0/${CRITERIA.length} ข้อ`;
+
+  // Job Weight
+  const jw = calcJobWeight(a);
+  document.getElementById('mr-weight-val').textContent = jw.wu.toFixed(1);
+  document.getElementById('mr-weight-lbl').textContent = jw.label;
+
+  // multi-cam dropdown
+  const wrap = document.getElementById('mr-cam').parentNode;
+  const existSel = document.getElementById('mr-cam-sel');
+  if (existSel) existSel.remove();
+  if (camList.length > 1) {
+    const sel = document.createElement('select');
+    sel.id='mr-cam-sel'; sel.className='inp';
+    sel.style.cssText='margin-top:5px;font-size:11.5px;padding:4px 8px;';
+    camList.forEach(n=>{const o=new Option(n,n);sel.appendChild(o);});
+    sel.value = camName;
+    sel.onchange = ()=>{
+      document.getElementById('mr-cam').textContent=sel.value;
+      document.getElementById('mr-av').textContent=ini(sel.value);
+    };
+    wrap.appendChild(sel);
+  }
+
+  // Build criteria rows
+  const container = document.getElementById('mr-criteria');
+  container.innerHTML = CRITERIA.map(c=>`
+    <div id="cr-row-${c.id}" style="background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:9px 11px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;">
+        <i class="fa-solid ${c.ic}" style="font-size:10px;color:var(--t3);width:12px;text-align:center;"></i>
+        <span style="font-size:12px;font-weight:700;color:var(--text);">${c.lb}</span>
+        <span style="font-size:10px;color:var(--t3);margin-left:2px;">${c.desc}</span>
+      </div>
+      <div style="display:flex;gap:5px;">
+        <button class="cr-btn" data-val="2" onclick="crSetScore('${c.id}',2)">
+          <i class="fa-solid fa-circle-check" style="margin-right:4px;"></i>ดี <span style="font-size:9.5px;opacity:.7;">(2)</span>
+        </button>
+        <button class="cr-btn" data-val="1" onclick="crSetScore('${c.id}',1)">
+          <i class="fa-solid fa-circle-minus" style="margin-right:4px;"></i>พอใช้ <span style="font-size:9.5px;opacity:.7;">(1)</span>
+        </button>
+        <button class="cr-btn" data-val="0" onclick="crSetScore('${c.id}',0)">
+          <i class="fa-solid fa-circle-xmark" style="margin-right:4px;"></i>ต้องปรับ <span style="font-size:9.5px;opacity:.7;">(0)</span>
+        </button>
+      </div>
+    </div>`).join('');
+
+  openM('m-rate');
+}
+
+function setStar(v) { STAR = v; } // compat stub
+
+function submitRating() {
+  // ตรวจว่าให้คะแนนครบทุกข้อ
+  const missing = CRITERIA.filter(c=>_crScores[c.id]===undefined);
+  if (missing.length > 0) {
+    toast('กรุณาให้คะแนนให้ครบทุกหัวข้อ (' + missing.map(c=>c.lb).join(', ') + ')','err');
+    return;
+  }
+  const id  = document.getElementById('mr-id').textContent;
+  const sel = document.getElementById('mr-cam-sel');
+  const cam = sel ? sel.value : document.getElementById('mr-cam').textContent;
+  const cmt = document.getElementById('mr-comment').value.trim();
+  const total = CRITERIA.reduce((s,c)=>s+_crScores[c.id],0);
+  const a = ASSIGN.find(x=>x.id===id); if (!a) return;
+  const jw = calcJobWeight(a);
+  const i  = ASSIGN.findIndex(x=>x.id===id);
+  if (i>=0) {
+    ASSIGN[i].status     = 'rated';
+    ASSIGN[i].rating     = total;          // 0-10
+    ASSIGN[i].rating_pct = Math.round(total/10*100); // % for display
+    ASSIGN[i].scores     = {..._crScores}; // per-criteria
+    ASSIGN[i].r_comment  = cmt;
+    ASSIGN[i].rated_cam  = cam;
+    ASSIGN[i].job_weight = jw.wu;         // WU บันทึกตอนประเมิน
+    saveAS();
+  }
+  closeM('m-rate');
+  const pct = Math.round(total/10*100);
+  toast(`ประเมิน ${cam} — ${total}/10 คะแนน (${pct}%) · WU ${jw.wu}`);
+  const cur = document.getElementById('pg-title')?.textContent;
+  if (cur===PTITLE.rating) goPage('rating');
+  else dRender();
+}
+
+/* ══════════════════════════════════════════════════════════
+   BOOTSTRAP — รัน AFTER DOM ready
+══════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
+  populateHints();
+  initSearchListener();
+  // modal close on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key==='Escape') document.querySelectorAll('.modal-ov.on').forEach(m=>m.classList.remove('on'));
+  });
+  // modal close on backdrop click
+  document.querySelectorAll('.modal-ov').forEach(m => {
+    m.addEventListener('click', e => { if (e.target===m) m.classList.remove('on'); });
+  });
+});
+
+/* ══════════════════════════════════════════════════════════
+   MODAL HELPERS
+══════════════════════════════════════════════════════════ */
+function pgAppeals() {
+  const key = 'tnn_appeals_v5';
+  let appeals = [];
+  try { appeals = JSON.parse(localStorage.getItem(key)||'[]'); } catch{}
+  const w = document.getElementById('pg-wrap'); if (!w) return;
+  w.innerHTML = `
+  <div class="pg fu">
+    <div style="max-width:820px;margin:0 auto;">
+      <div style="font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:14px;">การโต้แย้งผลประเมิน</div>
+      ${!appeals.length ? '<div style="text-align:center;padding:50px;color:var(--t3);">ยังไม่มีการโต้แย้ง</div>' : ''}
+      ${appeals.map(a=>{
+        const assign = ASSIGN.find(x=>x.id===a.assignId);
+        return `<div class="card" style="padding:14px 16px;margin-bottom:9px;${a.status==='pending'?'border-color:rgba(234,179,8,.3)':''}">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;">
+            <div>
+              <div style="font-size:9px;font-family:var(--mono);color:var(--t3);">${a.id} · ${a.date}</div>
+              <div style="font-size:12.5px;font-weight:700;color:var(--text);">${a.camName}</div>
+              <div style="font-size:11px;color:var(--t2);">หมาย: ${assign?assign.title.slice(0,40)+'…':a.assignId} ${assign?'('+assign.rating+'/10)':''}</div>
+            </div>
+            <span class="badge ${a.status==='pending'?'b-rate':a.status==='approved'?'b-done':'b-pend'}">${a.status==='pending'?'รอพิจารณา':a.status==='approved'?'ยอมรับ':'ยืนยัน'}</span>
+          </div>
+          <div style="padding:8px 10px;background:var(--bg);border-radius:7px;font-size:11.5px;color:var(--t2);margin-bottom:9px;">${a.reason}</div>
+          ${a.status==='pending'?`<div style="display:flex;gap:6px;">
+            <button onclick="resolveAppeal('${a.id}','approved')" class="btn bgreen bsm"><i class="fa-solid fa-check"></i> ยอมรับ — ปรับคะแนน</button>
+            <button onclick="resolveAppeal('${a.id}','rejected')" class="btn bred bsm"><i class="fa-solid fa-xmark"></i> ยืนยันคะแนนเดิม</button>
+          </div>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+function resolveAppeal(aId, status) {
+  const key = 'tnn_appeals_v5';
+  let appeals = [];
+  try { appeals = JSON.parse(localStorage.getItem(key)||'[]'); } catch{}
+  const i = appeals.findIndex(a=>a.id===aId);
+  if (i>=0) { appeals[i].status=status; localStorage.setItem(key,JSON.stringify(appeals)); }
+  toast(status==='approved'?'ยอมรับการโต้แย้งแล้ว — กรุณาปรับคะแนนด้วยตนเอง':'ยืนยันคะแนนเดิมแล้ว');
+  pgAppeals();
+}
+
+function openManageCats() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-ov on';
+  overlay.id = 'tmp-cat-modal';
+  overlay.innerHTML = `
+  <div class="modal-box fu" style="max-width:480px;">
+    <div style="height:3px;background:var(--acc);border-radius:16px 16px 0 0;"></div>
+    <div class="mh">
+      <div style="font-size:14.5px;font-weight:700;color:var(--text);">จัดการหมวดหมู่อุปกรณ์</div>
+      <button class="mcl" onclick="document.getElementById('tmp-cat-modal').remove()">&times;</button>
+    </div>
+    <div class="mb">
+      <div style="font-size:10.5px;color:var(--t3);margin-bottom:11px;">หมวดหมู่ที่สร้างจะปรากฏใน คลังอุปกรณ์, ออกหมายข่าว และ จัดทีมช่างภาพ</div>
+      <div id="cat-list-wrap" style="margin-bottom:14px;"></div>
+      <div style="border-top:1px solid var(--border);padding-top:13px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:8px;">เพิ่มหมวดหมู่ใหม่</div>
+        <div style="display:flex;gap:6px;margin-bottom:5px;">
+          <input id="new-cat-key" class="inp" type="text" placeholder="key (ภาษาอังกฤษ เช่น lens)" style="flex:1;">
+          <input id="new-cat-lb"  class="inp" type="text" placeholder="ชื่อแสดง เช่น เลนส์" style="flex:2;">
+        </div>
+        <button onclick="addNewCat()" class="btn bp bsm" style="width:100%;justify-content:center;">
+          <i class="fa-solid fa-plus"></i> เพิ่มหมวดหมู่
+        </button>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  renderCatList();
+  overlay.addEventListener('click', e => { if (e.target===overlay) overlay.remove(); });
+}
+
+function renderCatList() {
+  const w = document.getElementById('cat-list-wrap'); if (!w) return;
+  const entries = Object.entries(EQ_META);
+  const DEFAULT_KEYS = Object.keys(DEFAULT_EQ_META);
+  w.innerHTML = entries.length === 0 ? '<div style="color:var(--t3);font-size:11.5px;">ยังไม่มีหมวดหมู่</div>' :
+    entries.map(([k,m]) => {
+      const isDefault = DEFAULT_KEYS.includes(k);
+      const count = EQUIP.filter(e=>e.t===k).length;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:var(--bg);margin-bottom:5px;">
+        <i class="fa-solid ${m.ic}" style="font-size:12px;color:var(--t3);width:14px;text-align:center;flex-shrink:0;"></i>
+        <div style="flex:1;">
+          <div style="font-size:12.5px;color:var(--text);">${m.lb}</div>
+          <div style="font-size:9.5px;color:var(--t3);font-family:var(--mono);">${k} · ${count} รายการ</div>
+        </div>
+        ${isDefault
+          ? `<span style="font-size:9.5px;color:var(--t3);padding:2px 7px;border:1px solid var(--border);border-radius:10px;">ค่าเริ่มต้น</span>`
+          : `<button onclick="deleteCat('${k}')" class="bic" style="color:var(--red);border-color:rgba(239,68,68,.18);" title="ลบหมวดหมู่"><i class="fa-solid fa-trash"></i></button>`}
+      </div>`;
+    }).join('');
+}
+
+function addNewCat() {
+  const key = document.getElementById('new-cat-key')?.value?.trim().toLowerCase().replace(/[^a-z0-9_-]/g,'');
+  const lb  = document.getElementById('new-cat-lb')?.value?.trim();
+  if (!key) { toast('กรุณาระบุ key (ภาษาอังกฤษ)','err'); return; }
+  if (!lb)  { toast('กรุณาระบุชื่อแสดงหมวดหมู่','err'); return; }
+  if (EQ_META[key]) { toast(`หมวดหมู่ "${key}" มีอยู่แล้ว`,'warn'); return; }
+  EQ_META[key] = { lb, ic:'fa-box' };
+  saveEQMeta();
+  document.getElementById('new-cat-key').value = '';
+  document.getElementById('new-cat-lb').value = '';
+  renderCatList();
+  toast(`เพิ่มหมวดหมู่ "${lb}" แล้ว`);
+}
+
+function deleteCat(key) {
+  const count = EQUIP.filter(e=>e.t===key).length;
+  if (count > 0) { toast(`ไม่สามารถลบได้ มีอุปกรณ์ ${count} รายการในหมวดนี้`,'err'); return; }
+  if (!confirm(`ลบหมวดหมู่ "${EQ_META[key]?.lb}" ?`)) return;
+  delete EQ_META[key]; saveEQMeta();
+  renderCatList();
+  toast('ลบหมวดหมู่แล้ว','warn');
+}
+
+function downloadRatingCSV() {
+  const rated = ASSIGN.filter(a => a.rating !== undefined && a.rated_cam !== undefined);
+  if (!rated.length) { toast('ยังไม่มีข้อมูลการประเมิน', 'warn'); return; }
+
+  // สร้าง CSV
+  const BOM = '\uFEFF'; // UTF-8 BOM สำหรับ Excel Thai
+  const headers = ['รหัสหมาย','วันที่','หมายข่าว','ประเภท','สถานที่','ผู้ออกหมาย','ช่างภาพ','ขับรถเอง','คะแนน (1-5)','ระดับ','ความเห็น'];
+
+  const rows = rated.map(a => {
+    const camNames = (a.cams||[]).map(c=>c.name).join(' / ') || a.cam || '—';
+    const driveNames = (a.cams||[]).filter(c=>c.drive).map(c=>c.name).join(' / ') || (a.drive?'ใช่':'—');
+    const level = ['','ต้องปรับปรุง','พอใช้','ปานกลาง','ดี','ยอดเยี่ยม'][a.rating] || '';
+    const esc = v => '"' + String(v||'').replace(/"/g,'""') + '"';
+    return [a.id, a.date, a.title, a.cat||'', a.loc||'', a.issuer||'', camNames, driveNames, a.rating, level, a.r_comment||''].map(esc).join(',');
+  });
+
+  const csv = BOM + headers.map(h=>'"'+h+'"').join(',') + '\n' + rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const now  = new Date();
+  const fname = 'TNN_rating_' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '.csv';
+  link.href = url; link.download = fname; link.click();
+  URL.revokeObjectURL(url);
+  toast('ดาวน์โหลด ' + fname + ' แล้ว (' + rated.length + ' รายการ)');
+}
+
+function globalSearch(q) {
+  const box = document.getElementById('search-results');
+  if (!box) return;
+  if (!q.trim()) { box.style.display='none'; return; }
+  const kw = q.toLowerCase();
+  const hits = ASSIGN.filter(a =>
+    a.title.toLowerCase().includes(kw) ||
+    (a.loc||'').toLowerCase().includes(kw) ||
+    (a.id||'').toLowerCase().includes(kw) ||
+    (a.reporter||'').toLowerCase().includes(kw) ||
+    (a.cams||[]).some(c=>c.name.toLowerCase().includes(kw))
+  ).slice(0,8);
+  if (!hits.length) {
+    box.innerHTML = '<div style="padding:14px;text-align:center;color:var(--t3);font-size:12px;">ไม่พบผลลัพธ์</div>';
+    box.style.display='block'; return;
+  }
+  box.innerHTML = hits.map(a => {
+    const s = sm(a.status);
+    const camNames = (a.cams||[]).map(c=>c.name).join(', ')||a.cam||'—';
+    return `<div onclick="document.getElementById('global-search').value='';document.getElementById('search-results').style.display='none';goPage('dash');setTimeout(()=>{window._dseg='all';dRender();},50);"
+      style="padding:10px 13px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .13s;"
+      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.title}</div>
+        <span class="badge ${s.cls}" style="flex-shrink:0;font-size:9px;">${s.lb}</span>
+      </div>
+      <div style="font-size:10.5px;color:var(--t3);">${a.date} · ${a.loc||''}</div>
+      ${camNames!=='—'?`<div style="font-size:10px;color:var(--t2);margin-top:1px;"><i class="fa-solid fa-camera" style="font-size:9px;margin-right:3px;opacity:.5;"></i>${camNames}</div>`:''}
+    </div>`;
+  }).join('');
+  box.style.display='block';
+}
+// ปิด search results เมื่อคลิกนอก — deferred
+function initSearchListener() {
+  document.addEventListener('click', e => {
+    const box = document.getElementById('search-results');
+    const inp = document.getElementById('global-search');
+    if (box && inp && !box.contains(e.target) && e.target!==inp) box.style.display='none';
+  });
+}
+
+// ── Notification System ─────────────────────────────────
+function exportDailyPDF() {
+  const list = gdFilter([...ASSIGN]).sort((a,b)=>(a.date+a.ts).localeCompare(b.date+b.ts));
+  const MODE_LBL = {day:'วันที่ '+GD.date, month:'เดือน '+GD.month, year:'ปี '+(parseInt(GD.year)+543), all:'ทั้งหมด', range:GD.rangeFrom&&GD.rangeTo?GD.rangeFrom+' ถึง '+GD.rangeTo:'—'};
+  const title = `TNN16 NewsDesk — ${MODE_LBL[GD.mode]}`;
+  const STATUS_TH = {pending:'รอจัดทีม',assigned:'กำลังปฏิบัติ',done:'เสร็จสิ้น',rated:'ประเมินแล้ว'};
+  const rows = list.map(a=>{
+    const cams = (a.cams||[]).map(c=>c.name+(c.drive?' (ขับ)':'')).join(', ')||a.cam||'—';
+    return `<tr>
+      <td style="font-size:11px;white-space:nowrap;">${a.date}<br><span style="color:#666;font-size:9px;">${a.id}</span></td>
+      <td style="font-size:12px;font-weight:600;">${a.title}</td>
+      <td style="font-size:11px;">${a.cat||''}</td>
+      <td style="font-size:11px;">${a.loc||''}</td>
+      <td style="font-size:11px;white-space:nowrap;">${a.ts||''}${a.te?'–'+a.te:''}</td>
+      <td style="font-size:11px;">${cams}</td>
+      <td style="font-size:11px;">${a.vhc||'—'}</td>
+      <td style="font-size:10px;white-space:nowrap;">${STATUS_TH[a.status]||a.status}</td>
+    </tr>`;
+  }).join('');
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>${title}</title>
+    <style>
+      body{font-family:'Sarabun',sans-serif;padding:20px;color:#111;}
+      h1{font-size:16px;margin-bottom:4px;}
+      p{font-size:11px;color:#666;margin-bottom:16px;}
+      table{width:100%;border-collapse:collapse;}
+      th{background:#f0f0f0;padding:7px 9px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border:1px solid #ddd;}
+      td{padding:7px 9px;border:1px solid #eee;vertical-align:top;}
+      tr:nth-child(even)td{background:#fafafa;}
+      @media print{body{padding:0;}}
+    </style>
+  </head><body>
+    <h1>📋 ${title}</h1>
+    <p>พิมพ์เมื่อ ${new Date().toLocaleString('th-TH')} · ${list.length} หมาย</p>
+    <table>
+      <thead><tr><th>วันที่/รหัส</th><th>หัวข้อข่าว</th><th>ประเภท</th><th>สถานที่</th><th>เวลา</th><th>ช่างภาพ</th><th>รถ</th><th>สถานะ</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </body></html>`);
+  w.document.close();
+  w.print();
+}
+
+function renderShiftNote() {
+  const bar = document.getElementById('shift-note-bar'); if (!bar) return;
+  const key = 'shift_' + (GD.date || today());
+  let notes = {};
+  try { notes = JSON.parse(localStorage.getItem('tnn_shift_notes_v5')||'{}'); } catch{}
+  const note = notes[key] || '';
+  const canEdit = ['admin','editor','chief_cam'].includes(CU?.role);
+  bar.innerHTML = `
+  <div style="background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.18);border-radius:9px;padding:9px 13px;display:flex;align-items:center;gap:9px;">
+    <i class="fa-solid fa-bullhorn" style="color:#facc15;font-size:12px;flex-shrink:0;"></i>
+    <div style="flex:1;font-size:12px;color:#e8e8c8;" id="shift-note-text">${note||'<span style="color:var(--t3);font-style:italic;">ยังไม่มีหมายเหตุประจำวัน</span>'}</div>
+    ${canEdit?`<button onclick="editShiftNote('${key}')" class="bic" style="flex-shrink:0;" title="แก้ไขหมายเหตุ"><i class="fa-solid fa-pen"></i></button>`:''}
+  </div>`;
+}
+function editShiftNote(key) {
+  let notes = {};
+  try { notes = JSON.parse(localStorage.getItem('tnn_shift_notes_v5')||'{}'); } catch{}
+  const cur = notes[key]||'';
+  const val = prompt('หมายเหตุประจำวัน (ทุกคนจะเห็น)', cur);
+  if (val === null) return;
+  notes[key] = val.trim();
+  localStorage.setItem('tnn_shift_notes_v5', JSON.stringify(notes));
+  renderShiftNote();
+  toast('บันทึกหมายเหตุประจำวันแล้ว');
+}
+
+// ── dismissed set: เก็บ id ที่ dismiss แล้ว (session only) ──
+const _dismissed = new Set();
+
+function buildNotifications() {
+  const now     = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const nowMins  = now.getHours()*60 + now.getMinutes();
+  const notes = [];
+
+  // 🔴 ACTION REQUIRED ─────────────────────────────────
+  // หมายใกล้เริ่ม (≤ 60 นาที)
+  ASSIGN.filter(a => a.status==='assigned' && a.date===todayStr).forEach(a => {
+    if (!a.ts) return;
+    const [h,m] = a.ts.split(':').map(Number);
+    const diff = (h*60+m) - nowMins;
+    if (diff > 0 && diff <= 60) {
+      const nid = 'soon_'+a.id;
+      notes.push({
+        nid, group:'action',
+        icon:'fa-clock', color:'#f87171',
+        title:'หมายใกล้เริ่ม',
+        msg: `"${a.title.slice(0,28)}" เริ่มใน ${diff} นาที`,
+        sub: `${a.ts} · ${a.loc||''}`,
+        action: { lb:'ดูหมาย', fn: `goPage('dash');closeNotif();` },
+      });
+    }
+  });
+
+  // หมายรอจัดทีม (แสดงรายหมาย ไม่ใช่รวม)
+  ASSIGN.filter(a => a.status==='pending').forEach(a => {
+    const nid = 'pend_'+a.id;
+    if (_dismissed.has(nid)) return;
+    notes.push({
+      nid, group:'action',
+      icon:'fa-users', color:'#60a5fa',
+      title:'รอจัดทีม',
+      msg: a.title.slice(0,35),
+      sub: `${a.date} ${a.ts||''} · ${a.loc||''}`,
+      action: { lb:'จัดทีม', fn: `goPage('crew');closeNotif();` },
+      dismissible: true,
+    });
+  });
+
+  // หมายรอประเมิน (เฉพาะที่ฉันออก)
+  ASSIGN.filter(a => a.status==='done' && a.issuer===CU?.name).forEach(a => {
+    const nid = 'rate_'+a.id;
+    if (_dismissed.has(nid)) return;
+    notes.push({
+      nid, group:'action',
+      icon:'fa-star', color:'#facc15',
+      title:'รอประเมินผล',
+      msg: a.title.slice(0,35),
+      sub: `${a.date} · ${(a.cams||[]).map(c=>c.name).join(', ')||a.cam||''}`,
+      action: { lb:'ประเมิน', fn: `openRating('${a.id}');closeNotif();` },
+      dismissible: true,
+    });
+  });
+
+  // 🟡 INFO ─────────────────────────────────────────────
+  // อุปกรณ์ส่งซ่อม
+  const maint = EQUIP.filter(e => e.s==='maintenance');
+  if (maint.length) {
+    const nid = 'maint_all';
+    if (!_dismissed.has(nid))
+      notes.push({
+        nid, group:'info',
+        icon:'fa-wrench', color:'#fb923c',
+        title:'อุปกรณ์ส่งซ่อม',
+        msg: maint.map(e=>e.n).join(', ').slice(0,50),
+        sub: `${maint.length} รายการ`,
+        action: { lb:'ดูคลัง', fn: `goPage('equip');closeNotif();` },
+        dismissible: true,
+      });
+  }
+
+  return notes;
+}
+
+function updateNotifBadge() {
+  const notes = buildNotifications();
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  // นับเฉพาะ action group
+  const urgent = notes.filter(n=>n.group==='action').length;
+  if (urgent > 0) {
+    badge.textContent = urgent > 9 ? '9+' : urgent;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function closeNotif() {
+  const p = document.getElementById('notif-panel');
+  if (p) p.style.display = 'none';
+}
+
+function dismissNotif(nid) {
+  _dismissed.add(nid);
+  // re-render panel
+  const notes = buildNotifications();
+  renderNotifPanel(notes);
+  updateNotifBadge();
+}
+
+function renderNotifPanel(notes) {
+  const panel = document.getElementById('notif-panel');
+  if (!panel) return;
+
+  if (!notes.length) {
+    panel.innerHTML = `
+      <div style="padding:22px 16px;text-align:center;color:var(--t3);">
+        <i class="fa-solid fa-circle-check" style="font-size:26px;display:block;margin-bottom:8px;opacity:.35;color:var(--green);"></i>
+        <div style="font-size:12px;font-weight:600;margin-bottom:3px;color:var(--t2);">ทุกอย่างเรียบร้อย</div>
+        <div style="font-size:10.5px;">ไม่มีการแจ้งเตือน</div>
+      </div>`;
+    return;
+  }
+
+  // แบ่งกลุ่ม
+  const actions = notes.filter(n=>n.group==='action');
+  const infos   = notes.filter(n=>n.group==='info');
+
+  const renderItem = (n) => `
+    <div style="display:flex;align-items:flex-start;gap:9px;padding:10px 13px;border-bottom:1px solid var(--border);background:transparent;transition:background .12s;"
+      onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
+      <div style="width:30px;height:30px;border-radius:8px;background:${n.color}18;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+        <i class="fa-solid ${n.icon}" style="font-size:11px;color:${n.color};"></i>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:9.5px;font-weight:700;color:${n.color};text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">${n.title}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.msg}</div>
+        ${n.sub ? `<div style="font-size:10.5px;color:var(--t3);margin-top:1px;">${n.sub}</div>` : ''}
+        ${n.action ? `<button onclick="${n.action.fn}" style="margin-top:6px;padding:3px 9px;font-size:10.5px;font-weight:600;background:${n.color}18;border:1px solid ${n.color}44;color:${n.color};border-radius:5px;cursor:pointer;font-family:var(--sans);">${n.action.lb} →</button>` : ''}
+      </div>
+      ${n.dismissible ? `<button onclick="dismissNotif('${n.nid}')" title="ปิดการแจ้งเตือนนี้"
+        style="background:none;border:none;color:var(--t4);cursor:pointer;padding:2px 4px;border-radius:4px;font-size:13px;flex-shrink:0;line-height:1;transition:color .13s;"
+        onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--t4)'">×</button>` : ''}
+    </div>`;
+
+  let html2 = '';
+  if (actions.length) {
+    html2 += `<div style="padding:8px 13px 5px;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);">ต้องดำเนินการ <span style="color:var(--red);">(${actions.length})</span></div>`;
+    html2 += actions.map(renderItem).join('');
+  }
+  if (infos.length) {
+    html2 += `<div style="padding:8px 13px 5px;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);${actions.length?'border-top:1px solid var(--border);':''}">ข้อมูลทั่วไป</div>`;
+    html2 += infos.map(renderItem).join('');
+  }
+  panel.innerHTML = html2;
+}
+
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  if (!panel) return;
+  if (panel.style.display !== 'none') { closeNotif(); return; }
+  const notes = buildNotifications();
+  renderNotifPanel(notes);
+  panel.style.display = 'block';
+  // ปิดเมื่อคลิกนอก
+  setTimeout(() => {
+    const closer = e => {
+      const btn = document.getElementById('notif-btn');
+      if (!panel.contains(e.target) && e.target !== btn && !btn?.contains(e.target)) {
+        closeNotif();
+        document.removeEventListener('click', closer);
+      }
+    };
+    document.addEventListener('click', closer);
+  }, 10);
+}
+
+function openM(id)  { document.getElementById(id).classList.add('on'); }
+function closeM(id) { document.getElementById(id).classList.remove('on'); }
+// modal listeners now inside initModalListeners() called on DOMContentLoaded
+</script>
+</body>
+</html>
